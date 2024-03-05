@@ -1,0 +1,13 @@
+# Config :
+
+config.mk
+
+# generated :
+generated/
+build/
+ifcc
+
+# IDEs
+compile_commands.json
+.cache/
+.vscode/
