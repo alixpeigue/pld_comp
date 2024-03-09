@@ -2,10 +2,15 @@
 
 config.mk
 
+# Antlr
+
+antlr/*
+
 # generated :
 generated/
 build/
 ifcc
+tests/ifcc-test-output
 
 # IDEs
 compile_commands.json

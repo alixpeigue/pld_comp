@@ -5,7 +5,7 @@
 include config.mk
 
 CC=g++
-CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
+CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
 LDFLAGS=-g
 
 default: all
@@ -18,7 +18,8 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
 	build/main.o \
-	build/CodeGenVisitor.o
+	build/CodeGenVisitor.o \
+	build/SymbolsTableVisitor.o
 
 ifcc: $(OBJECTS)
 	@mkdir -p build

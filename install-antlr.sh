@@ -43,6 +43,8 @@ curl -O https://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip
 ######################################################################
 # Build step
 
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++
 unzip *.zip
 mkdir build
 cd build

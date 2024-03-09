@@ -1,12 +1,12 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include "antlr4-runtime.h"
-#include "generated/ifccLexer.h"
-#include "generated/ifccParser.h"
-#include "generated/ifccBaseVisitor.h"
+#include "ifccBaseVisitor.h"
+#include "ifccLexer.h"
+#include "ifccParser.h"
 
 #include "CodeGenVisitor.h"
 #include "SymbolsTableVisitor.h"
@@ -14,45 +14,39 @@
 using namespace antlr4;
 using namespace std;
 
-int main(int argn, const char **argv)
-{
-  stringstream in;
-  if (argn==2)
-  {
-     ifstream lecture(argv[1]);
-     if( !lecture.good() )
-     {
-         cerr<<"error: cannot read file: " << argv[1] << endl ;
-         exit(1);
-     }
-     in << lecture.rdbuf();
-  }
-  else
-  {
-      cerr << "usage: ifcc path/to/file.c" << endl ;
-      exit(1);
-  }
-  
-  ANTLRInputStream input(in.str());
+int main(int argn, const char **argv) {
+    stringstream in;
+    if (argn == 2) {
+        ifstream lecture(argv[1]);
+        if (!lecture.good()) {
+            cerr << "error: cannot read file: " << argv[1] << endl;
+            exit(1);
+        }
+        in << lecture.rdbuf();
+    } else {
+        cerr << "usage: ifcc path/to/file.c" << endl;
+        exit(1);
+    }
 
-  ifccLexer lexer(&input);
-  CommonTokenStream tokens(&lexer);
+    ANTLRInputStream input(in.str());
 
-  tokens.fill();
+    ifccLexer lexer(&input);
+    CommonTokenStream tokens(&lexer);
 
-  ifccParser parser(&tokens);
-  tree::ParseTree* tree = parser.axiom();
+    tokens.fill();
 
-  if(parser.getNumberOfSyntaxErrors() != 0)
-  {
-      cerr << "error: syntax error during parsing" << endl;
-      exit(1);
-  }
+    ifccParser parser(&tokens);
+    tree::ParseTree *tree = parser.axiom();
 
-  SymbolsTableVisitor symbolsTable;
-  symbolsTable.visit(tree);
-  CodeGenVisitor v(symbolsTable.getMap());
-  v.visit(tree);
+    if (parser.getNumberOfSyntaxErrors() != 0) {
+        cerr << "error: syntax error during parsing" << endl;
+        exit(1);
+    }
 
-  return 0;
+    SymbolsTableVisitor symbolsTable;
+    symbolsTable.visit(tree);
+    CodeGenVisitor v(symbolsTable.getMap());
+    v.visit(tree);
+
+    return 0;
 }
