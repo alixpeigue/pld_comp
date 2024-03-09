@@ -8,6 +8,8 @@ CC=g++
 CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
 LDFLAGS=-g
 
+.PHONY: check gui clean
+
 default: all
 all: ifcc
 
@@ -70,3 +72,8 @@ gui:
 clean:
 	rm -rf build generated
 	rm -f ifcc
+
+##########################################
+# Performs all tests
+check:
+	python tests/ifcc-test.py tests/testfiles

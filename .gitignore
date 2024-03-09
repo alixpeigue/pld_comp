@@ -10,7 +10,7 @@ antlr/*
 generated/
 build/
 ifcc
-tests/ifcc-test-output
+**/ifcc-test-output
 
 # IDEs
 compile_commands.json
