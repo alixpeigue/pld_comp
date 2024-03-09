@@ -76,4 +76,4 @@ clean:
 ##########################################
 # Performs all tests
 check:
-	python tests/ifcc-test.py tests/testfiles
+	python3 tests/ifcc-test.py tests/testfiles
