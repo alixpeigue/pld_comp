@@ -1,7 +1,6 @@
 #include "CodeGenVisitor.h"
 
 antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
-    // Header du programme, on a choisit la syntaxe intel
     std::cout << ".intel_syntax noprefix\n";
     std::cout << ".globl main\n";
     std::cout << " main: \n";
@@ -25,7 +24,8 @@ CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     // On récupère l'index dans la pile du résultat de l'expression à return
     int expr_index = (int)this->visit(ctx->expression());
 
-    // On met le contenu de la variable temporaire de l'expression dans eax (registre du return)
+    // On met le contenu de la variable temporaire de l'expression dans eax
+    // (registre du return)
     std::cout << "    mov eax, DWORD PTR -" << expr_index * 4 << "[rbp]\n";
     return 0;
 }
@@ -44,16 +44,19 @@ CodeGenVisitor::visitDeclaAffect(ifccParser::DeclaAffectContext *ctx) {
     if (ctx->expression()) {
         std::string variable = ctx->VARIABLE()->getText();
 
-        // On génère le code de l'expression et on récupère l'index dans la pile de son résultat
+        // On génère le code de l'expression et on récupère l'index dans la pile
+        // de son résultat
         int expr_index = (int)visit(ctx->expression());
 
-        // On met le contenu de la variable temporaire de l'expression dans la variable à initialiser (en passant par eax)
+        // On met le contenu de la variable temporaire de l'expression dans la
+        // variable à initialiser (en passant par eax)
         std::cout << "    mov eax, DWORD PTR -" << expr_index * 4 << "[rbp]\n";
         std::cout << "    mov DWORD PTR -" << symbolsTable.at(variable) * 4
                   << "[rbp], eax\n";
     }
 
-    // Sinon on a juste déclaré une variable sans initialisation, on ne fait rien
+    // Sinon on a juste déclaré une variable sans initialisation, on ne fait
+    // rien
 
     return 0;
 }
@@ -62,11 +65,11 @@ antlrcpp::Any CodeGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     // On récupère la valeur de la constante
     int value = stoi(ctx->INT_CONST()->getText());
 
-    // On ajoute une variable temporaire dans la table des symboles correspondant à la constante
+    // On ajoute une variable temporaire dans la table des symboles
+    // correspondant à la constante
     ++counterTempVariables;
     symbolsTable.insert(std::make_pair(
         "#" + std::to_string(counterTempVariables), symbolsTable.size() + 1));
-
 
     // On met la valeur de la constante dans la variable temporaire
     std::cout << "    mov DWORD PTR -" << (symbolsTable.size()) * 4 << "[rbp], "
@@ -81,7 +84,8 @@ CodeGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     // On récupère la valeur de la constante
     int value = ctx->CHAR_CONST()->getText()[1];
 
-    // On ajoute une variable temporaire dans la table des symboles correspondant à la constante
+    // On ajoute une variable temporaire dans la table des symboles
+    // correspondant à la constante
     ++counterTempVariables;
     symbolsTable.insert(std::make_pair(
         "#" + std::to_string(counterTempVariables), symbolsTable.size() + 1));
@@ -106,10 +110,12 @@ antlrcpp::Any CodeGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
     // On récupère le nom de la variable à affecter
     std::string variable = ctx->VARIABLE()->getText();
 
-    // On génère le code de l'expression et on récupère l'index dans la pile de son résultat
+    // On génère le code de l'expression et on récupère l'index dans la pile de
+    // son résultat
     int expr_index = (int)this->visit(ctx->expression());
 
-    // On met le contenu de la variable temporaire de l'expression dans la variable à initialiser (en passant par eax)
+    // On met le contenu de la variable temporaire de l'expression dans la
+    // variable à initialiser (en passant par eax)
     std::cout << "    mov eax, DWORD PTR -" << expr_index * 4 << "[rbp]\n";
     std::cout << "    mov DWORD PTR -" << symbolsTable.at(variable) * 4
               << "[rbp], eax\n";
@@ -124,13 +130,13 @@ antlrcpp::Any CodeGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
 }
 
 antlrcpp::Any CodeGenVisitor::visitMult(ifccParser::MultContext *ctx) {
-    // On génère le code des expressions à multiplier/diviser et on récupère l'index dans la pile de leur résultat
+    // On génère le code des expressions à multiplier/diviser et on récupère
+    // l'index dans la pile de leur résultat
     int expr1_index = (int)visit(ctx->expression(0));
     int expr2_index = (int)visit(ctx->expression(1));
 
     // On bouge le résultat de la première expression dans eax
     std::cout << "    mov eax, DWORD PTR -" << expr1_index * 4 << "[rbp]\n";
-
 
     if (ctx->op->getText()[0] == '*') {
         // Multiplication
@@ -147,7 +153,8 @@ antlrcpp::Any CodeGenVisitor::visitMult(ifccParser::MultContext *ctx) {
         std::cout << "    mov eax, edx\n";
     }
 
-    // On ajoute une variable temporaire dans la table des symboles correspondant au résultat de l'opération
+    // On ajoute une variable temporaire dans la table des symboles
+    // correspondant au résultat de l'opération
     ++counterTempVariables;
     symbolsTable.insert(std::make_pair(
         "#" + std::to_string(counterTempVariables), symbolsTable.size() + 1));
@@ -161,7 +168,8 @@ antlrcpp::Any CodeGenVisitor::visitMult(ifccParser::MultContext *ctx) {
 }
 
 antlrcpp::Any CodeGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
-    // On génère le code des expressions à additionner/soustraire et on récupère l'index dans la pile de leur résultat
+    // On génère le code des expressions à additionner/soustraire et on récupère
+    // l'index dans la pile de leur résultat
     int expr1_index = (int)visit(ctx->expression(0));
     int expr2_index = (int)visit(ctx->expression(1));
 
@@ -176,7 +184,8 @@ antlrcpp::Any CodeGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
         std::cout << "    sub eax, DWORD PTR -" << expr2_index * 4 << "[rbp]\n";
     }
 
-    // On ajoute une variable temporaire dans la table des symboles correspondant au résultat de l'opération
+    // On ajoute une variable temporaire dans la table des symboles
+    // correspondant au résultat de l'opération
     ++counterTempVariables;
     symbolsTable.insert(std::make_pair(
         "#" + std::to_string(counterTempVariables), symbolsTable.size() + 1));
@@ -190,10 +199,12 @@ antlrcpp::Any CodeGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
 }
 
 antlrcpp::Any CodeGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
-    // On génère le code de l'expression et on récupère l'index dans la pile de son résultat
+    // On génère le code de l'expression et on récupère l'index dans la pile de
+    // son résultat
     int expr_index = (int)visit(ctx->expression());
 
-    // Si l'opération unaire est un plus, on ne fait rien et on renvoit la position du résultat de l'expression
+    // Si l'opération unaire est un plus, on ne fait rien et on renvoit la
+    // position du résultat de l'expression
     if (ctx->op->getText()[0] == '+')
         return (int)expr_index;
 
@@ -201,7 +212,8 @@ antlrcpp::Any CodeGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     std::cout << "    mov eax, DWORD PTR -" << expr_index * 4 << "[rbp]\n";
     std::cout << "    neg eax\n";
 
-    // On ajoute une variable temporaire dans la table des symboles correspondant au résultat de l'opération
+    // On ajoute une variable temporaire dans la table des symboles
+    // correspondant au résultat de l'opération
     ++counterTempVariables;
     symbolsTable.insert(std::make_pair(
         "#" + std::to_string(counterTempVariables), symbolsTable.size() + 1));

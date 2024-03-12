@@ -20,3 +20,5 @@ void ir::CFG::visitRoots(IRBaseVisitor &visitor) {
         root->visit(visitor);
     }
 }
+
+void ir::Affect::accept(IRBaseVisitor &visitor) { visitor.visitAffect(*this); }
