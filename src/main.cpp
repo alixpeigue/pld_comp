@@ -11,6 +11,9 @@
 #include "CodeGenVisitor.h"
 #include "SymbolsTableVisitor.h"
 
+#include "IRBaseVisitor.h"
+#include "ir.h"
+
 using namespace antlr4;
 using namespace std;
 
@@ -47,6 +50,7 @@ int main(int argn, const char **argv) {
         exit(1);
     }
 
+<<<<<<< HEAD
 
     // Visite de l'arbre pour créer la table des symboles
     SymbolsTableVisitor symbolsTableVisitor;
@@ -54,6 +58,11 @@ int main(int argn, const char **argv) {
 
     // Visite de l'arbre en passant la table des symboles pour générer le code assembleur
     CodeGenVisitor v(symbolsTableVisitor.getMap());
+=======
+    SymbolsTableVisitor symbolsTable;
+    symbolsTable.visit(tree);
+    IRGenVisitor v(symbolsTable.getMap());
+>>>>>>> bf6933f (added Affect instruction)
     v.visit(tree);
 
     return 0;
