@@ -15,9 +15,9 @@ expression: INT_CONST # intConst |
             CHAR_CONST #charConst | 
             VARIABLE # variable |
             '(' expression ')' #paren |
+            op = ('-' | '+') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
-            op = ('-' | '+') expression # unaryAdd |
             VARIABLE '=' expression  # affect;
 
 RETURN : 'return' ;
