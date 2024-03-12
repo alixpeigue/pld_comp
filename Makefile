@@ -8,6 +8,9 @@ CC=g++
 CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
 LDFLAGS=-g
 
+SRC-DIR = src
+OUT-DIR = build
+
 .PHONY: check gui clean
 
 default: all
@@ -15,33 +18,33 @@ all: ifcc
 
 ##########################################
 # link together all pieces of our compiler 
-OBJECTS=build/ifccBaseVisitor.o \
-	build/ifccLexer.o \
-	build/ifccVisitor.o \
-	build/ifccParser.o \
-	build/main.o \
-	build/CodeGenVisitor.o \
-	build/SymbolsTableVisitor.o
+ANTLR_OBJECTS=$(OUT-DIR)/ifccBaseVisitor.o \
+	$(OUT-DIR)/ifccLexer.o \
+	$(OUT-DIR)/ifccVisitor.o \
+	$(OUT-DIR)/ifccParser.o \
 
-ifcc: $(OBJECTS)
+SRCS = $(wildcard $(SRC-DIR)/*.cpp)
+OBJECTS = $(SRCS:$(SRC-DIR)/%.cpp=$(OUT-DIR)/%.o)
+
+ifcc: $(OBJECTS) $(ANTLR_OBJECTS)
 	@mkdir -p build
-	$(CC) $(LDFLAGS) build/*.o $(ANTLRLIB) -o ifcc
+	$(CC) $(LDFLAGS) $(OBJECTS) $(ANTLR_OBJECTS) $(ANTLRLIB) -o ifcc
 
 ##########################################
 # compile our hand-writen C++ code: main(), CodeGenVisitor, etc.
-build/%.o: src/%.cpp generated/ifccParser.cpp
-	@mkdir -p build
+$(OUT-DIR)/%.o: src/%.cpp generated/ifccParser.cpp
+	@mkdir -p $(OUT-DIR)
 	$(CC) $(CCFLAGS) -MMD -o $@ $< 
 
 ##########################################
 # compile all the antlr-generated C++
-build/%.o: generated/%.cpp
-	@mkdir -p build
+$(OUT-DIR)/%.o: generated/%.cpp
+	@mkdir -p $(OUT-DIR)
 	$(CC) $(CCFLAGS) -MMD -o $@ $< 
 
 # automagic dependency management: `gcc -MMD` generates all the .d files for us
--include build/*.d
-build/%.d:
+-include $(OUT-DIR)/*.d
+$(OUT-DIR)/%.d:
 
 ##########################################
 # generate the C++ implementation of our Lexer/Parser/Visitor
@@ -70,7 +73,7 @@ gui:
 ##########################################
 # delete all machine-generated files
 clean:
-	rm -rf build generated
+	rm -rf $(OUT-DIR) generated
 	rm -f ifcc
 
 ##########################################
