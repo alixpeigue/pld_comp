@@ -15,6 +15,8 @@ using namespace antlr4;
 using namespace std;
 
 int main(int argn, const char **argv) {
+
+    // Gestion de l'input
     stringstream in;
     if (argn == 2) {
         ifstream lecture(argv[1]);
@@ -30,22 +32,28 @@ int main(int argn, const char **argv) {
 
     ANTLRInputStream input(in.str());
 
+    // Initialisation du lexer et récupération des tokens
     ifccLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
-
     tokens.fill();
 
+    // Initialisation du parser et création de l'arbre syntaxique
     ifccParser parser(&tokens);
     tree::ParseTree *tree = parser.axiom();
 
+    // Gestion des erreurs de syntaxe
     if (parser.getNumberOfSyntaxErrors() != 0) {
         cerr << "error: syntax error during parsing" << endl;
         exit(1);
     }
 
-    SymbolsTableVisitor symbolsTable;
-    symbolsTable.visit(tree);
-    CodeGenVisitor v(symbolsTable.getMap());
+
+    // Visite de l'arbre pour créer la table des symboles
+    SymbolsTableVisitor symbolsTableVisitor;
+    symbolsTableVisitor.visit(tree);
+
+    // Visite de l'arbre en passant la table des symboles pour générer le code assembleur
+    CodeGenVisitor v(symbolsTableVisitor.getMap());
     v.visit(tree);
 
     return 0;
