@@ -2,9 +2,7 @@
 
 
 class IRx86Visitor : public IRBaseVisitor {
-    void visitAffect(ir::Affect &affect) {
-        std::cout << "    mov # A compléter !";
-    }
+    void visitAffect(ir::Affect &affect) {}
 
     void visitAffectConst(ir::AffectConst &affectConst) {
         std::cout << "    mov # A compléter !";
