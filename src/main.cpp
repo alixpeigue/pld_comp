@@ -11,6 +11,9 @@
 #include "CodeGenVisitor.h"
 #include "SymbolsTableVisitor.h"
 
+#include "IRBaseVisitor.h"
+#include "ir.h"
+
 using namespace antlr4;
 using namespace std;
 
@@ -45,7 +48,7 @@ int main(int argn, const char **argv) {
 
     SymbolsTableVisitor symbolsTable;
     symbolsTable.visit(tree);
-    CodeGenVisitor v(symbolsTable.getMap());
+    IRGenVisitor v(symbolsTable.getMap());
     v.visit(tree);
 
     return 0;

@@ -1,3 +1,7 @@
 #pragma once
 
-class IRBaseVisitor {};
+#include "ir.h"
+class IRBaseVisitor {
+public:
+    virtual void visitAffect(ir::Affect &affect) = 0;
+};

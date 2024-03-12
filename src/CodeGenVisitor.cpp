@@ -1,6 +1,6 @@
 #include "CodeGenVisitor.h"
 
-antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     std::cout << ".intel_syntax noprefix\n";
     std::cout << ".globl main\n";
     std::cout << " main: \n";
@@ -17,20 +17,20 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
 }
 
 antlrcpp::Any
-CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
+IRGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     int expr_index = (int)this->visit(ctx->expression());
     std::cout << "    mov eax, DWORD PTR -" << expr_index * 4 << "[rbp]\n";
     return 0;
 }
 
 antlrcpp::Any
-CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) {
+IRGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) {
     visitChildren(ctx);
     return 0;
 }
 
 antlrcpp::Any
-CodeGenVisitor::visitDeclaAffect(ifccParser::DeclaAffectContext *ctx) {
+IRGenVisitor::visitDeclaAffect(ifccParser::DeclaAffectContext *ctx) {
 
     if (ctx->expression()) {
         std::string variable = ctx->VARIABLE()->getText();
@@ -43,7 +43,7 @@ CodeGenVisitor::visitDeclaAffect(ifccParser::DeclaAffectContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     int value = stoi(ctx->INT_CONST()->getText());
 
     ++counterTempVariables;
@@ -56,8 +56,7 @@ antlrcpp::Any CodeGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     return (int)symbolsTable.size();
 }
 
-antlrcpp::Any
-CodeGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     int value = ctx->CHAR_CONST()->getText()[1];
 
     ++counterTempVariables;
@@ -69,12 +68,12 @@ CodeGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     return (int)symbolsTable.size();
 }
 
-antlrcpp::Any CodeGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
     std::string variable = ctx->VARIABLE()->getText();
     return (int)symbolsTable.at(variable);
 }
 
-antlrcpp::Any CodeGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
     std::string variable = ctx->VARIABLE()->getText();
 
     int expr_index = (int)this->visit(ctx->expression());
@@ -85,11 +84,11 @@ antlrcpp::Any CodeGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
     return (int)symbolsTable.at(variable);
 }
 
-antlrcpp::Any CodeGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
     return (int)visit(ctx->expression());
 }
 
-antlrcpp::Any CodeGenVisitor::visitMult(ifccParser::MultContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitMult(ifccParser::MultContext *ctx) {
     int expr1_index = (int)visit(ctx->expression(0));
     int expr2_index = (int)visit(ctx->expression(1));
     std::cout << "    mov eax, DWORD PTR -" << expr1_index * 4 << "[rbp]\n";
@@ -117,7 +116,7 @@ antlrcpp::Any CodeGenVisitor::visitMult(ifccParser::MultContext *ctx) {
     return (int)symbolsTable.size();
 }
 
-antlrcpp::Any CodeGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
     int expr1_index = (int)visit(ctx->expression(0));
     int expr2_index = (int)visit(ctx->expression(1));
     std::cout << "    mov eax, DWORD PTR -" << expr1_index * 4 << "[rbp]\n";
@@ -138,7 +137,7 @@ antlrcpp::Any CodeGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
     return (int)symbolsTable.size();
 }
 
-antlrcpp::Any CodeGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     int expr_index = (int)visit(ctx->expression());
 
     if (ctx->op->getText()[0] == '+')
