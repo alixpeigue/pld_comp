@@ -22,3 +22,4 @@ void ir::CFG::visitRoots(IRBaseVisitor &visitor) {
 }
 
 void ir::Affect::accept(IRBaseVisitor &visitor) { visitor.visitAffect(*this); }
+void ir::AffectConst::accept(IRBaseVisitor &visitor) {visitor.visitAffectConst(*this);}
