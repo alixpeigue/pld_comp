@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "IRGenVisitor.h"
+#include "IRx86Visitor.h"
 #include "antlr4-runtime.h"
 #include "ifccBaseVisitor.h"
 #include "ifccLexer.h"
@@ -12,6 +14,7 @@
 #include "SymbolsTableVisitor.h"
 
 #include "IRBaseVisitor.h"
+#include "Scope.h"
 #include "ir.h"
 
 using namespace antlr4;
@@ -50,20 +53,16 @@ int main(int argn, const char **argv) {
         exit(1);
     }
 
-<<<<<<< HEAD
+    // SymbolsTableVisitor symbolsTable;
+    // symbolsTable.visit(tree);
+    // CodeGenVisitor v(symbolsTable.getMap());
+    // v.visit(tree);
+    vector<std::unique_ptr<ir::CFG>> ir;
+    IRGenVisitor v1(ir);
+    v1.visit(tree);
 
-    // Visite de l'arbre pour créer la table des symboles
-    SymbolsTableVisitor symbolsTableVisitor;
-    symbolsTableVisitor.visit(tree);
-
-    // Visite de l'arbre en passant la table des symboles pour générer le code assembleur
-    CodeGenVisitor v(symbolsTableVisitor.getMap());
-=======
-    SymbolsTableVisitor symbolsTable;
-    symbolsTable.visit(tree);
-    IRGenVisitor v(symbolsTable.getMap());
->>>>>>> bf6933f (added Affect instruction)
-    v.visit(tree);
-
+    std::cout << ".intel_syntax noprefix\n";
+    IRx86Visitor v2;
+    ir[0]->visitBlocks(v2);
     return 0;
 }

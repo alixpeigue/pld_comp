@@ -3,9 +3,9 @@
 #include "antlr4-runtime.h"
 #include "ifccBaseVisitor.h"
 
-class IRGenVisitor : public ifccBaseVisitor {
+class CodeGenVisitor : public ifccBaseVisitor {
 public:
-    IRGenVisitor(std::unordered_map<std::string, int> &symbolsTable)
+    CodeGenVisitor(std::unordered_map<std::string, int> &symbolsTable)
         : symbolsTable(symbolsTable){};
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
     virtual antlrcpp::Any

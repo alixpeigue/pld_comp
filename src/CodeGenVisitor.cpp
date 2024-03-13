@@ -19,8 +19,8 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any
-CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitReturn_stmt(
+    ifccParser::Return_stmtContext *ctx) {
     // On récupère l'index dans la pile du résultat de l'expression à return
     int expr_index = (int)this->visit(ctx->expression());
 
@@ -30,15 +30,15 @@ CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any
-CodeGenVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitDeclaration(
+    ifccParser::DeclarationContext *ctx) {
     // On génère le code pour chaque DeclaAffect de la déclaration
     visitChildren(ctx);
     return 0;
 }
 
-antlrcpp::Any
-CodeGenVisitor::visitDeclaAffect(ifccParser::DeclaAffectContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitDeclaAffect(
+    ifccParser::DeclaAffectContext *ctx) {
 
     // Si on affecte une expression à la variable lors de la déclaration
     if (ctx->expression()) {
@@ -79,8 +79,8 @@ antlrcpp::Any CodeGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     return (int)symbolsTable.size();
 }
 
-antlrcpp::Any
-CodeGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitCharConst(
+    ifccParser::CharConstContext *ctx) {
     // On récupère la valeur de la constante
     int value = ctx->CHAR_CONST()->getText()[1];
 
