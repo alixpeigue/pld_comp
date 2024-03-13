@@ -30,7 +30,11 @@ antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     Scope *scope = new Scope(nullptr);
     this->currentFunction->addScope(std::unique_ptr<Scope>(scope));
 
-    this->currentBlock = std::make_unique<ir::BasicBlock>(scope, ".BB0");
+    std::string name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+
+    this->currentBlock =
+        std::make_unique<ir::BasicBlock>(scope, std::move(name));
 
     ir::BasicBlock *epilogue = new ir::BasicBlock(scope, ".main_ret");
     epilogue->setNext(std::make_unique<ir::Return>());
@@ -51,7 +55,9 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     Scope &currentScope = this->currentBlock->getScope();
     Scope *newScope = new Scope(&currentScope);
     this->currentFunction->addScope(std::unique_ptr<Scope>(newScope));
-    auto block = std::make_unique<ir::BasicBlock>(newScope, ".BB2");
+    std::string name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto block = std::make_unique<ir::BasicBlock>(newScope, name);
     std::swap(block, this->currentBlock);
     block->setNext(
         std::make_unique<ir::UnconditionalJump>(this->currentBlock.get()));
@@ -61,7 +67,9 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     this->visitChildren(ctx);
 
     // Create new block with previous scope and setup unconditional jump
-    block = std::make_unique<ir::BasicBlock>(&currentScope, ".BB3");
+    name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    block = std::make_unique<ir::BasicBlock>(&currentScope, name);
 
     this->currentBlock->setNext(
         std::make_unique<ir::UnconditionalJump>(block.get()));
@@ -72,6 +80,51 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
 }
 
 antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    // Visit condition
+    std::string condition = this->visit(ctx->expression());
+
+    // Create new blocks and setup jumps
+    Scope &currentScope = this->currentBlock->getScope();
+    std::string name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto thenBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto elseBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+
+    ir::BasicBlock *end = elseBlock.get();
+
+    if (ctx->else_stmt) {
+        name = ".BB" + std::to_string(this->counterBlocks);
+        ++counterBlocks;
+        end = new ir::BasicBlock(&currentScope, name);
+    }
+
+    auto conditional = std::make_unique<ir::ConditionalJump>(
+        std::move(condition), thenBlock.get(), elseBlock.get());
+
+    this->currentBlock->setNext(std::move(conditional));
+
+    this->currentFunction->addBlock(std::move(this->currentBlock));
+
+    this->currentBlock = std::move(thenBlock);
+
+    this->visit(ctx->then_stmt);
+
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
+
+    this->currentFunction->addBlock(std::move(this->currentBlock));
+
+    this->currentBlock = std::move(elseBlock);
+
+    if (ctx->else_stmt) {
+        this->visit(ctx->else_stmt);
+        this->currentBlock->setNext(
+            std::make_unique<ir::UnconditionalJump>(end));
+        this->currentFunction->addBlock(std::move(this->currentBlock));
+        this->currentBlock = std::unique_ptr<ir::BasicBlock>(end);
+    }
+
     return 0;
 }
 

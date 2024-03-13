@@ -105,6 +105,14 @@ void IRx86Visitor::visitUnconditionalJump(ir::UnconditionalJump &jump) {
     std::cout << "    jmp " << jump.getTo().getName() << "\n";
 }
 
+void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
+    Variable cond =
+        jump.getBlock().getScope().getVariable(jump.getCondition()).value();
+    std::cout << "    cmp DWORD PTR -" << cond.second << "[rbp], 0\n";
+    std::cout << "    je " << jump.getElse()->getName() << "\n";
+    std::cout << "    jmp " << jump.getThen()->getName() << "\n";
+}
+
 void IRx86Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
 
