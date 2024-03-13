@@ -48,4 +48,5 @@ private:
     std::unique_ptr<ir::CFG> currentFunction;
     std::unique_ptr<ir::BasicBlock> currentBlock;
     int counterTempVariables = 0;
+    int counterBlocks = 0;
 };

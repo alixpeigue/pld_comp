@@ -10,5 +10,6 @@ public:
     virtual void visitBasicBlock(ir::BasicBlock &bb) = 0;
     virtual void visitCFG(ir::CFG &cfg) = 0;
     virtual void visitUnconditionalJump(ir::UnconditionalJump &jump) = 0;
+    virtual void visitConditionalJump(ir::ConditionalJump &jump) = 0;
     virtual void visitReturn(ir::Return &jump) = 0;
 };

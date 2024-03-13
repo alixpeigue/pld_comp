@@ -53,4 +53,8 @@ void ir::UnconditionalJump::accept(IRBaseVisitor &visitor) {
     visitor.visitUnconditionalJump(*this);
 }
 
+void ir::ConditionalJump::accept(IRBaseVisitor &visitor) {
+    visitor.visitConditionalJump(*this);
+}
+
 void ir::Return::accept(IRBaseVisitor &visitor) { visitor.visitReturn(*this); }

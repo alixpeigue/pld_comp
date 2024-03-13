@@ -69,6 +69,24 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
 };
 
+class ConditionalJump : public Next {
+public:
+    ConditionalJump(std::string condition, BasicBlock *thenBlock,
+                    BasicBlock *elseBlock)
+        : condition(std::move(condition)), thenBlock(thenBlock),
+          elseBlock(elseBlock) {}
+
+    virtual void accept(IRBaseVisitor &visitor) override;
+    const std::string &getCondition() const { return condition; }
+    BasicBlock *getThen() { return thenBlock; }
+    BasicBlock *getElse() { return elseBlock; }
+
+protected:
+    std::string condition;
+    BasicBlock *thenBlock;
+    BasicBlock *elseBlock;
+};
+
 class CFG {
 public:
     CFG(std::string name) : name(std::move(name)) {}

@@ -8,7 +8,7 @@ statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt ;
 
 scope : '{' statement* '}' ;
 
-if_stmt : IF '(' expression ')' statement (ELSE statement)? ;
+if_stmt : IF '(' expression ')' then_stmt = statement (ELSE else_stmt = statement)? ;
 
 declaration: 'int' declaAffect (',' declaAffect)*;
 
