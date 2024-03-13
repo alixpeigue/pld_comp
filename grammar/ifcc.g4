@@ -2,7 +2,13 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : 'int' 'main' '(' ')' '{' (expression ';' | declaration ';' )* return_stmt '}' ;
+prog : 'int' 'main' '(' ')' '{' statement* '}' ;
+
+statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt ;
+
+scope : '{' statement* '}' ;
+
+if_stmt : IF '(' expression ')' statement (ELSE statement)? ;
 
 declaration: 'int' declaAffect (',' declaAffect)*;
 
@@ -20,6 +26,8 @@ expression: INT_CONST # intConst |
             expression op = ('+' | '-') expression # add |
             VARIABLE '=' expression  # affect;
 
+IF : 'if' ;
+ELSE : 'else' ;
 RETURN : 'return' ;
 INT_CONST : [-]?[0-9]+ ;
 CHAR_CONST : '\'' . '\'';
