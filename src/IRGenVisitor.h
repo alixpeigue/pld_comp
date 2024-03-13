@@ -12,6 +12,11 @@ public:
 
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
 
+    virtual antlrcpp::Any visitScope(ifccParser::ScopeContext *ctx) override;
+
+    virtual antlrcpp::Any visitIf_stmt(
+        ifccParser::If_stmtContext *ctx) override;
+
     virtual antlrcpp::Any visitReturn_stmt(
         ifccParser::Return_stmtContext *ctx) override;
 

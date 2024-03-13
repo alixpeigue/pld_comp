@@ -45,6 +45,36 @@ antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     return 0;
 }
 
+antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
+
+    // Create new block, new scope and setup unconditional jump
+    Scope &currentScope = this->currentBlock->getScope();
+    Scope *newScope = new Scope(&currentScope);
+    this->currentFunction->addScope(std::unique_ptr<Scope>(newScope));
+    auto block = std::make_unique<ir::BasicBlock>(newScope, ".BB2");
+    std::swap(block, this->currentBlock);
+    block->setNext(
+        std::make_unique<ir::UnconditionalJump>(this->currentBlock.get()));
+    this->currentFunction->addBlock(std::move(block));
+
+    // Visit inside scope
+    this->visitChildren(ctx);
+
+    // Create new block with previous scope and setup unconditional jump
+    block = std::make_unique<ir::BasicBlock>(&currentScope, ".BB3");
+
+    this->currentBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(block.get()));
+    this->currentFunction->addBlock(std::move(this->currentBlock));
+    this->currentBlock = std::move(block);
+
+    return 0;
+}
+
+antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    return 0;
+}
+
 antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     ifccParser::Return_stmtContext *ctx) {
     std::string toReturn = this->visit(ctx->expression());
