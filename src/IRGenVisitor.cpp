@@ -235,8 +235,12 @@ antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(to, INT);
-    auto instruction =
-        std::make_unique<ir::UnaryOp>(ir::UnaryOp::NEG, to, from);
+    std::unique_ptr<ir::UnaryOp> instruction;
+    if (ctx->op->getText()[0] == '+') {
+        instruction = std::make_unique<ir::UnaryOp>(ir::UnaryOp::NEG, to, from);
+    } else {
+        instruction = std::make_unique<ir::UnaryOp>(ir::UnaryOp::NOT, to, from);
+    }
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
