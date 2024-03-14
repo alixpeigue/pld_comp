@@ -29,7 +29,7 @@ expression: INT_CONST # intConst |
 IF : 'if' ;
 ELSE : 'else' ;
 RETURN : 'return' ;
-INT_CONST : [-]?[0-9]+ ;
+INT_CONST : [0-9]+ ;
 CHAR_CONST : '\'' . '\'';
 VARIABLE : [a-zA-Z_][a-zA-Z0-9_]* ;
 COMMENT : '/*' .*? '*/' -> skip ;
