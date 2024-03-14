@@ -21,7 +21,7 @@ expression: INT_CONST # intConst |
             CHAR_CONST #charConst | 
             VARIABLE # variable |
             '(' expression ')' #paren |
-            op = ('-' | '+') expression # unaryAdd |
+            op = ('-' | '+' | '!') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
             VARIABLE '=' expression  # affect;

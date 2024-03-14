@@ -65,11 +65,15 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     Variable to = scope.getVariable(unaryop.getTo()).value();
     Variable from = scope.getVariable(unaryop.getFrom()).value();
 
-    std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
-
     switch (unaryop.getType()) {
     case ir::UnaryOp::NEG:
-        std::cout << "neg eax\n";
+        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
+        std::cout << "    neg eax\n";
+        break;
+    case ir::UnaryOp::NOT:
+        std::cout << "    cmp DWORD PTR -" << from.second << "[rbp], 0\n";
+        std::cout << "    setz al\n";
+        std::cout << "    movzx eax, al\n";
         break;
     }
 
