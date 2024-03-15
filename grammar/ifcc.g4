@@ -18,6 +18,7 @@ expression: INT_CONST # intConst |
             op = ('-' | '+') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
+            expression op = ('<<' | '>>') expression #shift |
             VARIABLE '=' expression  # affect;
 
 RETURN : 'return' ;

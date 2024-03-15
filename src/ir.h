@@ -139,7 +139,7 @@ protected:
 
 class BinOp : public IRInstr {
 public:
-    enum BinOpType { ADD, SUB, DIV, MUL, MOD };
+    enum BinOpType { ADD, SUB, DIV, MUL, MOD, SHIFT_R, SHIFT_L };
 
     BinOp(BinOpType type, std::string to, std::string from, std::string right)
         : type(type), to(to), left(from), right(right) {}

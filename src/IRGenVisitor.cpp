@@ -157,3 +157,22 @@ antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
+
+antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "<<") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::SHIFT_L, to, left, right);
+    } else {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::SHIFT_R, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}

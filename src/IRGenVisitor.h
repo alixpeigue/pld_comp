@@ -6,6 +6,7 @@
 #include "ir.h"
 #include "support/Any.h"
 
+//Linearise le code vers notre IR
 class IRGenVisitor : public ifccBaseVisitor {
 public:
     IRGenVisitor(std::vector<std::unique_ptr<ir::CFG>> &ir) : ir(ir){};
@@ -37,6 +38,8 @@ public:
 
     virtual antlrcpp::Any visitUnaryAdd(
         ifccParser::UnaryAddContext *ctx) override;
+
+    virtual antlrcpp::Any visitShift(ifccParser::ShiftContext *ctx) override;
 
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;

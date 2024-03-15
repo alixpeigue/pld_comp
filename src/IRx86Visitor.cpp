@@ -36,11 +36,23 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
     if (type == ir::BinOp::DIV || type == ir::BinOp::MOD) {
         std::cout << "    cdq\n";
         std::cout << "    idiv DWORD PTR -" << right.second << "[rbp]\n";
-        std::string reg = type == ir::BinOp::MOD ? "edx" : "eax";
+        std::string reg = (type == ir::BinOp::MOD) ? "edx" : "eax";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], " << reg
                   << "\n";
         return;
     }
+    if (type == ir::BinOp::SHIFT_L || type == ir::BinOp::SHIFT_R) {
+        std::cout << "    mov ecx, DWORD PTR -" << right.second << "[rbp]\n";
+        if (type == ir::BinOp::SHIFT_L) {
+            std::cout << "    sal";
+        } else {
+            std::cout << "    sar";
+        }
+        std::cout << " eax, cl\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+        return;
+    }
+
 
     std::string instr = "ERR";
     switch (type) {
