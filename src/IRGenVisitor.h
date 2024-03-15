@@ -17,6 +17,9 @@ public:
     virtual antlrcpp::Any visitIf_stmt(
         ifccParser::If_stmtContext *ctx) override;
 
+    virtual antlrcpp::Any visitFunc_call(
+        ifccParser::Func_callContext *ctx) override;
+
     virtual antlrcpp::Any visitReturn_stmt(
         ifccParser::Return_stmtContext *ctx) override;
 

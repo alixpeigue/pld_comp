@@ -100,6 +100,7 @@ public:
     const std::vector<std::unique_ptr<BasicBlock>> &getBlocks() const {
         return blocks;
     }
+    uint32_t getSize();
     // Scope *mcainScope;
 
 protected:
@@ -172,6 +173,21 @@ protected:
     std::string to;
     std::string left;
     std::string right;
+};
+
+class Call : public IRInstr {
+public:
+    Call(const std::string &func_name, const std::string &ret) : func_name(func_name), ret(ret) {}
+    virtual void accept(IRBaseVisitor &visitor) override;
+    void addName(const std::string &name) {names.push_back(name);}
+    const std::string &getFunc_name() const { return func_name; }
+    const std::vector<std::string> &getNames() const { return names; }
+    const std::string &getRet() { return ret; }
+
+protected:
+    std::string ret;
+    std::string func_name;
+    std::vector<std::string> names;
 };
 
 } // namespace ir
