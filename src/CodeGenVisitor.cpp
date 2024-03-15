@@ -1,6 +1,6 @@
 #include "CodeGenVisitor.h"
 
-antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     std::cout << ".intel_syntax noprefix\n";
     std::cout << ".globl main\n";
     std::cout << " main: \n";
