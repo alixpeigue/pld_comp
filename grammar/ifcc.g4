@@ -4,11 +4,17 @@ axiom : prog EOF ;
 
 prog : 'int' 'main' '(' ')' '{' statement* '}' ;
 
-statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt ;
+statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop ;
 
 scope : '{' statement* '}' ;
 
 if_stmt : IF '(' expression ')' then_stmt = statement (ELSE else_stmt = statement)? ;
+
+loop : do_while_stmt | while_stmt ;
+
+do_while_stmt : DO then_stmt = statement WHILE '(' expression ')' ';' ;
+
+while_stmt : WHILE '(' expression ')' then_stmt = statement ;
 
 declaration: 'int' declaAffect (',' declaAffect)*;
 
@@ -28,6 +34,8 @@ expression: INT_CONST # intConst |
 
 IF : 'if' ;
 ELSE : 'else' ;
+DO : 'do' ;
+WHILE : 'while';
 RETURN : 'return' ;
 INT_CONST : [0-9]+ ;
 CHAR_CONST : '\'' . '\'';
