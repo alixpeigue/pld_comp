@@ -30,7 +30,8 @@ expression: INT_CONST # intConst |
             op = ('-' | '+' | '!') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
-            VARIABLE '=' expression  # affect;
+            VARIABLE '=' expression  # affect |
+            VARIABLE '(' expression? (',' expression)* ')' # func_call ;
 
 IF : 'if' ;
 ELSE : 'else' ;

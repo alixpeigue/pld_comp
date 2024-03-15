@@ -234,6 +234,21 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(ifccParser::Do_while_stmtContext 
     return 0;
 }
 
+antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
+    std::string tempVarName = "#" + std::to_string(this->counterTempVariables);
+    auto instruction = std::make_unique<ir::Call>(ctx->VARIABLE()->getText(), tempVarName);
+    ++this->counterTempVariables;
+    for (const auto & expr : ctx->expression()) {
+        std::string name = this->visit(expr);
+
+        instruction->addName(name);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    this->currentBlock->getScope().addVariable(tempVarName, INT);
+
+    return tempVarName;
+}
+
 antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     ifccParser::Return_stmtContext *ctx) {
     // Visit the expression to be returned.

@@ -23,6 +23,9 @@ public:
     virtual antlrcpp::Any visitDo_while_stmt(
         ifccParser::Do_while_stmtContext *ctx) override;
 
+    virtual antlrcpp::Any visitFunc_call(
+        ifccParser::Func_callContext *ctx) override;
+
     virtual antlrcpp::Any visitReturn_stmt(
         ifccParser::Return_stmtContext *ctx) override;
 
