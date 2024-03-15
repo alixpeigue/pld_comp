@@ -220,3 +220,45 @@ antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
+
+antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::XOR, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::OR, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::AND, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}

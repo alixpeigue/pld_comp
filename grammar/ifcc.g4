@@ -21,6 +21,9 @@ expression: INT_CONST # intConst |
             expression op = ('<<' | '>>') expression #shift |
             expression op = ('<' | '>' | '<=' | '>=') expression #compare |
             expression op = ('==' | '!=') expression #compareEq |
+            expression '&' expression # andBin |
+            expression '^' expression # xorBin |
+            expression '|' expression # orBin |
             VARIABLE '=' expression  # affect;
 
 RETURN : 'return' ;

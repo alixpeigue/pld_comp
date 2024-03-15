@@ -93,6 +93,15 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
     case ir::BinOp::MUL:
         instr = "imul";
         break;
+    case ir::BinOp::OR:
+        instr = "or";
+        break;
+    case ir::BinOp::XOR:
+        instr = "xor";
+        break;
+    case ir::BinOp::AND:
+        instr = "and";
+        break;
     }
 
     std::cout << "    " << instr << " eax, DWORD PTR -" << right.second

@@ -42,7 +42,14 @@ public:
     virtual antlrcpp::Any visitShift(ifccParser::ShiftContext *ctx) override;
 
     virtual antlrcpp::Any visitCompare(ifccParser::CompareContext *ctx) override;
+
     virtual antlrcpp::Any visitCompareEq(ifccParser::CompareEqContext *ctx) override;
+
+    virtual antlrcpp::Any visitXorBin(ifccParser::XorBinContext *ctx) override;
+
+    virtual antlrcpp::Any visitOrBin(ifccParser::OrBinContext *ctx) override;
+
+    virtual antlrcpp::Any visitAndBin(ifccParser::AndBinContext *ctx) override;
 
 
 private:
