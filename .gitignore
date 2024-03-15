@@ -16,3 +16,5 @@ ifcc
 compile_commands.json
 .cache/
 .vscode/
+a.out
+vgcore*
