@@ -176,3 +176,47 @@ antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
+
+antlrcpp::Any IRGenVisitor::visitCompare(ifccParser::CompareContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "<") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::LT, to, left, right);
+    } else if (ctx->op->getText() == ">"){
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::GT, to, left, right);
+    }else if (ctx->op->getText() == ">="){
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::GTE, to, left, right);
+    }else if (ctx->op->getText() == "<="){
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::LTE, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
+     std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "=="){
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::EQ, to, left, right);
+    }else if (ctx->op->getText() == "!="){
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::NEQ, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}

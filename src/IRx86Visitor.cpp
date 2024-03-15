@@ -53,6 +53,34 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         return;
     }
 
+    if (type >= ir::BinOp::GT && type <= ir::BinOp::NEQ) {
+        std::cout << "    cmp eax, DWORD PTR -" << right.second << "[rbp]\n";
+        switch (type) {
+        case ir::BinOp::GT:
+            std::cout << "    setg al\n";
+            break;
+        case ir::BinOp::LT:
+            std::cout << "    setl al\n";
+            break;
+        case ir::BinOp::GTE:
+            std::cout << "    setge al\n";
+            break;
+        case ir::BinOp::LTE:
+            std::cout << "    setle al\n";
+            break;
+        case ir::BinOp::EQ:
+            std::cout << "    sete al\n";
+            break;
+        case ir::BinOp::NEQ:
+            std::cout << "    setne al\n";
+            break;
+        default:
+            break;
+        }
+        std::cout << "    movzx   eax, al\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+        return;
+    }
 
     std::string instr = "ERR";
     switch (type) {

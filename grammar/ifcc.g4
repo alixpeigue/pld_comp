@@ -19,6 +19,8 @@ expression: INT_CONST # intConst |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
             expression op = ('<<' | '>>') expression #shift |
+            expression op = ('<' | '>' | '<=' | '>=') expression #compare |
+            expression op = ('==' | '!=') expression #compareEq |
             VARIABLE '=' expression  # affect;
 
 RETURN : 'return' ;

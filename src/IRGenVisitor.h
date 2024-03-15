@@ -41,6 +41,10 @@ public:
 
     virtual antlrcpp::Any visitShift(ifccParser::ShiftContext *ctx) override;
 
+    virtual antlrcpp::Any visitCompare(ifccParser::CompareContext *ctx) override;
+    virtual antlrcpp::Any visitCompareEq(ifccParser::CompareEqContext *ctx) override;
+
+
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
     std::unique_ptr<ir::CFG> currentFunction;
