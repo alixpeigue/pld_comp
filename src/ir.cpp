@@ -1,25 +1,56 @@
 #include "IRBaseVisitor.h"
 #include "ir.h"
+#include <iostream>
 
 void ir::BasicBlock::addInstr(std::unique_ptr<IRInstr> instr) {
+    instr->block = this;
     this->instrs.push_back(std::move(instr));
 }
 
-void ir::BasicBlock::visit(IRBaseVisitor &visitor) {
-    for (auto &instr : this->instrs) {
-        instr->accept(visitor);
-    }
+void ir::BasicBlock::accept(IRBaseVisitor &visitor) {
+    // visitor.visitEnterBlock(*this);
+    // for (auto &instr : this->instrs) {
+    //     instr->accept(visitor);
+    // }
+    // visitor.visitLeaveBlock(*this);
+    visitor.visitBasicBlock(*this);
 }
 
-void ir::CFG::addRoot(std::unique_ptr<BasicBlock> block) {
-    this->roots.push_back(std::move(block));
+void ir::BasicBlock::setNext(std::unique_ptr<ir::Next> next) {
+    next->block = this;
+    this->next = std::move(next);
 }
 
-void ir::CFG::visitRoots(IRBaseVisitor &visitor) {
-    for (auto &root : roots) {
-        root->visit(visitor);
-    }
+void ir::CFG::addBlock(std::unique_ptr<BasicBlock> block) {
+    block->cfg = this;
+    this->blocks.push_back(std::move(block));
+}
+
+void ir::CFG::addScope(std::unique_ptr<Scope> block) {
+    // block->cfg = this;
+    this->scopes.push_back(std::move(block));
+}
+
+void ir::CFG::visitBlocks(IRBaseVisitor &visitor) {
+    // visitor.visitPrelude(*this);
+    // for (auto &block : blocks) {
+    //     block->accept(visitor);
+    // }
+    // visitor.visitEpilogue(*this);
+    visitor.visitCFG(*this);
 }
 
 void ir::Affect::accept(IRBaseVisitor &visitor) { visitor.visitAffect(*this); }
-void ir::AffectConst::accept(IRBaseVisitor &visitor) {visitor.visitAffectConst(*this);}
+void ir::AffectConst::accept(IRBaseVisitor &visitor) {
+    visitor.visitAffectConst(*this);
+}
+void ir::BinOp::accept(IRBaseVisitor &visitor) { visitor.visitBinOp(*this); }
+void ir::UnaryOp::accept(IRBaseVisitor &visitor) {
+    visitor.visitUnaryOp(*this);
+}
+
+void ir::UnconditionalJump::accept(IRBaseVisitor &visitor) {
+    visitor.visitUnconditionalJump(*this);
+}
+
+void ir::Return::accept(IRBaseVisitor &visitor) { visitor.visitReturn(*this); }
