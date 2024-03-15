@@ -5,6 +5,7 @@ config.mk
 # Antlr
 
 antlr/*
+**/.antlr/*
 
 # generated :
 generated/
