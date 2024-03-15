@@ -12,4 +12,6 @@ class IRx86Visitor : public IRBaseVisitor {
     virtual void visitCFG(ir::CFG &cfg) override;
     virtual void visitUnconditionalJump(ir::UnconditionalJump &jump) override;
     virtual void visitReturn(ir::Return &ret) override;
+
+    int currentCompBlock = 0;
 };

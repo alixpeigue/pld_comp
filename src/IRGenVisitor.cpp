@@ -230,7 +230,7 @@ antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
-        std::make_unique<ir::BinOp>(ir::BinOp::XOR, to, left, right);
+        std::make_unique<ir::BinOp>(ir::BinOp::XOR_BIN, to, left, right);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
@@ -244,7 +244,7 @@ antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
-        std::make_unique<ir::BinOp>(ir::BinOp::OR, to, left, right);
+        std::make_unique<ir::BinOp>(ir::BinOp::OR_BIN, to, left, right);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
@@ -258,7 +258,35 @@ antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::AND_BIN, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
         std::make_unique<ir::BinOp>(ir::BinOp::AND, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::OR, to, left, right);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }

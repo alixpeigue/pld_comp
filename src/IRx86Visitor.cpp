@@ -82,6 +82,31 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         return;
     }
 
+    if (type == ir::BinOp::AND) {
+        std::string block1 = ".AND" + std::to_string(currentCompBlock);
+        currentCompBlock++;
+        std::string block2 = ".AND" + std::to_string(currentCompBlock);
+        currentCompBlock++;
+
+        std::cout << "    cmp DWORD PTR -" << left.second << "[rbp], 0\n";
+        std::cout << "    je " << block1 << "\n";
+        std::cout << "    cmp DWORD PTR -" << right.second << "[rbp], 0\n";
+        std::cout << "    je " << block1 << "\n";
+        std::cout << "    mov   eax, 1\n";
+        std::cout << "    jmp " << block2 << "\n";
+
+        std::cout << block1 << ":\n";
+        std::cout << "    mov   eax, 0\n";
+        std::cout << "    jmp " << block2 << "\n";
+
+
+        std::cout << block2 << ":\n";
+        std::cout << "    movzx   eax, al\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+        return;
+    }
+
+
     std::string instr = "ERR";
     switch (type) {
     case ir::BinOp::ADD:
@@ -93,13 +118,13 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
     case ir::BinOp::MUL:
         instr = "imul";
         break;
-    case ir::BinOp::OR:
+    case ir::BinOp::OR_BIN:
         instr = "or";
         break;
-    case ir::BinOp::XOR:
+    case ir::BinOp::XOR_BIN:
         instr = "xor";
         break;
-    case ir::BinOp::AND:
+    case ir::BinOp::AND_BIN:
         instr = "and";
         break;
     }

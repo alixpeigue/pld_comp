@@ -24,6 +24,8 @@ expression: INT_CONST # intConst |
             expression '&' expression # andBin |
             expression '^' expression # xorBin |
             expression '|' expression # orBin |
+            expression '&&' expression #and |
+            expression '||' expression #or |
             VARIABLE '=' expression  # affect;
 
 RETURN : 'return' ;

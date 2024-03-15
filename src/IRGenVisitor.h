@@ -51,6 +51,9 @@ public:
 
     virtual antlrcpp::Any visitAndBin(ifccParser::AndBinContext *ctx) override;
 
+    virtual antlrcpp::Any visitAnd(ifccParser::AndContext *ctx) override ;
+    virtual antlrcpp::Any visitOr(ifccParser::OrContext *ctx) override;
+
 
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
