@@ -17,20 +17,24 @@ antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     // Create the initial basic block for the program.
     std::string name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    this->currentBlock =
-        std::make_unique<ir::BasicBlock>(scope, std::move(name));
+
+    this->currentBlock = new ir::BasicBlock(scope, std::move(name));
+    this->currentFunction->addBlock(
+        std::unique_ptr<ir::BasicBlock>(this->currentBlock));
 
     // Create the epilogue block for the main function.
     ir::BasicBlock *epilogue = new ir::BasicBlock(scope, ".main_ret");
     epilogue->setNext(std::make_unique<ir::Return>());
     this->currentFunction->setEpilogue(epilogue);
 
-    // Visit children nodes to generate IR code.
-    this->visitChildren(ctx);
-    // Add a variable "#return" to the current block's scope.
     currentBlock->getScope().addVariable("#return", INT);
-    // Add current block and epilogue block to the main function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
+    currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(epilogue));
+
+    try {
+        this->visitChildren(ctx);
+    } catch (const std::exception &) {
+    }
+
     this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(epilogue));
     // Push the main function to the list of functions in the IR.
     this->ir.push_back(std::move(this->currentFunction));
@@ -41,27 +45,31 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     // Create a new block, new scope, and set up an unconditional jump.
     Scope &currentScope = this->currentBlock->getScope();
     Scope *newScope = new Scope(&currentScope);
-    this->currentFunction->addScope(std::unique_ptr<Scope>(newScope));
+    currentFunction->addScope(std::unique_ptr<Scope>(newScope));
     std::string name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto block = std::make_unique<ir::BasicBlock>(newScope, name);
-    std::swap(block, this->currentBlock);
-    block->setNext(
-        std::make_unique<ir::UnconditionalJump>(this->currentBlock.get()));
-    this->currentFunction->addBlock(std::move(block));
+    auto scopeBlock = new ir::BasicBlock(newScope, name);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(scopeBlock));
 
-    // Visit inside the scope to generate IR code for its contents.
-    this->visitChildren(ctx);
-
-    // Create a new block with the previous scope and set up an unconditional jump.
+    // Create a new block with the previous scope and set up an unconditional
+    // jump.
     name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    block = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto afterScopeBlock = new ir::BasicBlock(&currentScope, name);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(afterScopeBlock));
 
-    this->currentBlock->setNext(
-        std::make_unique<ir::UnconditionalJump>(block.get()));
-    this->currentFunction->addBlock(std::move(this->currentBlock));
-    this->currentBlock = std::move(block);
+    auto end = currentBlock->getNext();
+
+    currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(scopeBlock));
+    scopeBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(afterScopeBlock));
+    afterScopeBlock->setNext(std::move(end));
+
+    currentBlock = scopeBlock;
+
+    visitChildren(ctx);
+
+    currentBlock = afterScopeBlock;
 
     return 0;
 }
@@ -73,19 +81,20 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     // Create new blocks for the then and else branches, and set up jumps.
     Scope &currentScope = this->currentBlock->getScope();
-    
+
     // Generate a name for the basic block representing the 'then' branch.
     std::string name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto thenBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto thenBlock = new ir::BasicBlock(&currentScope, name);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
 
-    // Generate a name for the basic block representing the 'else' branch.
     name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto elseBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto elseBlock = new ir::BasicBlock(&currentScope, name);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
 
-    // Initialize the 'end' block to point to the else block.
-    ir::BasicBlock *end = elseBlock.get();
+    ir::BasicBlock *end = elseBlock;
+    std::unique_ptr<ir::Next> endNext = std::move(currentBlock->getNext());
 
     // Check if there is an 'else' statement.
     if (ctx->else_stmt) {
@@ -93,46 +102,40 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         name = ".BB" + std::to_string(this->counterBlocks);
         ++counterBlocks;
         end = new ir::BasicBlock(&currentScope, name);
+        currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(end));
     }
 
     // Create a conditional jump instruction based on the condition.
+    end->setNext(std::move(endNext));
+
     auto conditional = std::make_unique<ir::ConditionalJump>(
-        std::move(condition), thenBlock.get(), elseBlock.get());
+        std::move(condition), thenBlock, elseBlock);
 
     // Set the next block for the current block to be the conditional jump.
     this->currentBlock->setNext(std::move(conditional));
 
-    // Add the current block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
-
-    // Move to the 'then' block to generate code for the 'then' branch.
     this->currentBlock = std::move(thenBlock);
-
-    // Generate code for the 'then' branch of the if statement.
-    this->visit(ctx->then_stmt);
-
-    // Set up an unconditional jump to the end of the if statement.
     this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
 
-    // Add the 'then' block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
+    try {
+        this->visit(ctx->then_stmt);
+    } catch (const std::exception &) {
+    }
 
     // Move to the 'else' block to generate code for the 'else' branch (if any).
     this->currentBlock = std::move(elseBlock);
 
     // If there is an 'else' statement, generate code for it.
     if (ctx->else_stmt) {
-        this->visit(ctx->else_stmt);
-
-        // Set up an unconditional jump to the end of the if statement.
         this->currentBlock->setNext(
             std::make_unique<ir::UnconditionalJump>(end));
 
-        // Add the 'else' block to the list of blocks in the current function.
-        this->currentFunction->addBlock(std::move(this->currentBlock));
+        try {
+            this->visit(ctx->else_stmt);
+        } catch (const std::exception &) {
+        }
 
-        // Set the current block to the 'end' block.
-        this->currentBlock = std::unique_ptr<ir::BasicBlock>(end);
+        this->currentBlock = end;
     }
 
     // Return 0, indicating successful visitation.
@@ -140,95 +143,100 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 }
 
 // Visits a while loop statement.
-antlrcpp::Any IRGenVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitWhile_stmt(
+    ifccParser::While_stmtContext *ctx) {
     // Retrieve the current scope.
     Scope &currentScope = this->currentBlock->getScope();
 
     // Create a new basic block for the loop condition.
     std::string name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto conditionBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
-    ir::BasicBlock *conditionBlockPtr = conditionBlock.get();
+    auto conditionBlock = new ir::BasicBlock(&currentScope, name);
+    this->currentFunction->addBlock(
+        std::unique_ptr<ir::BasicBlock>(conditionBlock));
 
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
     name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto thenBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto thenBlock = new ir::BasicBlock(&currentScope, name);
+    thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(conditionBlock));
+    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
 
     name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto elseBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto elseBlock = new ir::BasicBlock(&currentScope, name);
+    elseBlock->setNext(this->currentBlock->getNext());
+    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
 
-    // Set up an unconditional jump from the current block to the condition block.
-    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(conditionBlockPtr));
-    // Add the current block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
-    // Move to the condition block.
-    this->currentBlock = std::move(conditionBlock);
+    this->currentBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(conditionBlock));
 
-    // Generate code for the loop condition.
-    std::string condition = this->visit(ctx->expression());
-    // Create a conditional jump based on the loop condition.
-    auto conditional = std::make_unique<ir::ConditionalJump>(
-        std::move(condition), thenBlock.get(), elseBlock.get());
-    // Set the next block for the condition block to be the conditional jump.
-    this->currentBlock->setNext(std::move(conditional));
-    // Add the condition block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
-    // Move to the 'then' block.
-    this->currentBlock = std::move(thenBlock);
+    this->currentBlock = conditionBlock;
+    auto condition = this->visit(ctx->expression());
+
+    // Set the conditional jumlp on condition block
+    conditionBlock->setNext(std::make_unique<ir::ConditionalJump>(
+        std::move(condition), thenBlock, elseBlock));
+
+    this->currentBlock = thenBlock;
 
     // Generate code for the loop body.
-    this->visit(ctx->then_stmt);
-    // Set up an unconditional jump from the 'then' block back to the condition block.
-    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(conditionBlockPtr));
-    // Add the 'then' block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
+    try {
+        this->visit(ctx->then_stmt);
+    } catch (std::exception &e) {
+    };
 
     // Move to the 'else' block.
-    this->currentBlock = std::move(elseBlock);
+    this->currentBlock = elseBlock;
 
     // Return 0, indicating successful visitation.
     return 0;
 }
 
 // Visits a do-while loop statement.
-antlrcpp::Any IRGenVisitor::visitDo_while_stmt(ifccParser::Do_while_stmtContext *ctx) {
+antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
+    ifccParser::Do_while_stmtContext *ctx) {
     // Retrieve the current scope.
     Scope &currentScope = this->currentBlock->getScope();
 
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
     std::string name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto thenBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
-    ir::BasicBlock *thenBlockPtr = thenBlock.get();
+    auto thenBlock = new ir::BasicBlock(&currentScope, name);
+    // Add the current block to the list of blocks in the current function.
+    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
 
     name = ".BB" + std::to_string(this->counterBlocks);
     ++counterBlocks;
-    auto elseBlock = std::make_unique<ir::BasicBlock>(&currentScope, name);
+    auto elseBlock = new ir::BasicBlock(&currentScope, name);
+    elseBlock->setNext(this->currentBlock->getNext());
+    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
+
+    thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(elseBlock));
 
     // Set up an unconditional jump from the current block to the 'then' block.
-    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(thenBlockPtr));
-    // Add the current block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
-    // Move to the 'then' block.
-    this->currentBlock = std::move(thenBlock);
+    this->currentBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(thenBlock));
 
-    // Generate code for the loop body.
-    this->visit(ctx->then_stmt);
+    // Move to the 'then' block.
+    this->currentBlock = thenBlock;
+
+    try {
+        // Generate code for the loop body.
+        this->visit(ctx->then_stmt);
+    } catch (std::exception &e) {
+    }
 
     // Generate code for the loop condition.
     std::string condition = this->visit(ctx->expression());
     // Create a conditional jump based on the loop condition.
     auto conditional = std::make_unique<ir::ConditionalJump>(
-        std::move(condition), thenBlockPtr, elseBlock.get());
+        std::move(condition), thenBlock, elseBlock);
     // Set the next block for the condition block to be the conditional jump.
     this->currentBlock->setNext(std::move(conditional));
-    // Add the 'then' block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::move(this->currentBlock));
 
     // Move to the 'else' block.
-    this->currentBlock = std::move(elseBlock);
+    this->currentBlock = elseBlock;
 
     // Return 0, indicating successful visitation.
     return 0;
@@ -236,9 +244,10 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(ifccParser::Do_while_stmtContext 
 
 antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
     std::string tempVarName = "#" + std::to_string(this->counterTempVariables);
-    auto instruction = std::make_unique<ir::Call>(ctx->VARIABLE()->getText(), tempVarName);
+    auto instruction =
+        std::make_unique<ir::Call>(ctx->VARIABLE()->getText(), tempVarName);
     ++this->counterTempVariables;
-    for (const auto & expr : ctx->expression()) {
+    for (const auto &expr : ctx->expression()) {
         std::string name = this->visit(expr);
 
         instruction->addName(name);
@@ -259,6 +268,9 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     // Set up an unconditional jump to the function's epilogue.
     this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(
         &this->currentFunction->getEpilogue()));
+
+    throw std::exception();
+
     return 0;
 }
 
@@ -267,7 +279,8 @@ antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     // Add a variable declaration to the current block's scope.
     this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(), INT);
     if (ctx->expression()) {
-        // If there's an expression, create an instruction to affect the variable.
+        // If there's an expression, create an instruction to affect the
+        // variable.
         std::string to = ctx->VARIABLE()->getText();
         std::string from = (std::string)this->visit(ctx->expression());
         auto instruction = std::make_unique<ir::Affect>(to, from);
@@ -285,7 +298,8 @@ antlrcpp::Any IRGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     std::string variableName = "#" + std::to_string(this->counterTempVariables);
     // Add the temporary variable to the current block's scope.
     this->currentBlock->getScope().addVariable(variableName, INT);
-    // Create an instruction to affect the temporary variable with the integer value.
+    // Create an instruction to affect the temporary variable with the integer
+    // value.
     auto instruction = std::make_unique<ir::AffectConst>(variableName, value);
     this->currentBlock->addInstr(std::move(instruction));
     return variableName;
@@ -300,7 +314,8 @@ antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     std::string variableName = "#" + std::to_string(this->counterTempVariables);
     // Add the temporary variable to the current block's scope.
     this->currentBlock->getScope().addVariable(variableName, INT);
-    // Create an instruction to affect the temporary variable with the character value.
+    // Create an instruction to affect the temporary variable with the character
+    // value.
     auto instruction = std::make_unique<ir::AffectConst>(variableName, value);
     this->currentBlock->addInstr(std::move(instruction));
     return variableName;
