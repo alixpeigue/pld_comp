@@ -177,6 +177,19 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
         std::cout << "    dec DWORD PTR -" << from.second << "[rbp]\n";
     } else if (unaryop.getType() == ir::UnaryOp::PRE_INC){
         std::cout << "    inc DWORD PTR -" << from.second << "[rbp]\n";
+    } else if (unaryop.getType() == ir::UnaryOp::POST_DEC){ // b = a-- 
+
+        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n"; // On met a dans eax
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";   // on met eax dans b;
+        std::cout << "    dec DWORD PTR -" << from.second << "[rbp]\n";      // On decremente a   
+
+    } else if (unaryop.getType() == ir::UnaryOp::POST_INC){ // b = a++ 
+
+        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n"; // On met a dans eax
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";   // on met eax dans b;
+        std::cout << "    inc DWORD PTR -" << from.second << "[rbp]\n";      // On incremente a   
+        
+
     }
 
 }

@@ -306,3 +306,25 @@ antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
     this->currentBlock->addInstr(std::move(instruction));
     return from;
 }
+
+antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_INC, to, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_DEC, to, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
