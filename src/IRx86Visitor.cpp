@@ -86,7 +86,9 @@ void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
         instruction->accept(*this);
     }
     // Call end block here :
-    bb.getNext().accept(*this);
+    auto next = bb.getNext();
+    next->accept(*this);
+    bb.setNext(std::move(next));
 }
 
 void IRx86Visitor::visitCFG(ir::CFG &cfg) {

@@ -40,7 +40,7 @@ public:
     const std::vector<std::unique_ptr<IRInstr>> &getInstructions() const {
         return instrs;
     }
-    Next &getNext() const { return *next; }
+    std::unique_ptr<Next> getNext() { return std::move(next); }
     void setNext(std::unique_ptr<Next> next);
     CFG &getCFG() { return *cfg; }
 
