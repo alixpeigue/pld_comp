@@ -33,15 +33,13 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
 
     ir::BinOp::BinOpType type = binop.getType();
 
-    if (type == ir::BinOp::DIV || type == ir::BinOp::MOD) {
+    if (type == ir::BinOp::DIV || type == ir::BinOp::MOD) { // a ( / | % ) b
         std::cout << "    cdq\n";
         std::cout << "    idiv DWORD PTR -" << right.second << "[rbp]\n";
         std::string reg = (type == ir::BinOp::MOD) ? "edx" : "eax";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], " << reg
                   << "\n";
-        return;
-    }
-    if (type == ir::BinOp::SHIFT_L || type == ir::BinOp::SHIFT_R) {
+    } else if (type == ir::BinOp::SHIFT_L || type == ir::BinOp::SHIFT_R) { // a ( << | >> ) b
         std::cout << "    mov ecx, DWORD PTR -" << right.second << "[rbp]\n";
         if (type == ir::BinOp::SHIFT_L) {
             std::cout << "    sal";
@@ -50,10 +48,7 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         }
         std::cout << " eax, cl\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-        return;
-    }
-
-    if (type >= ir::BinOp::GT && type <= ir::BinOp::NEQ) {
+    } else  if (type >= ir::BinOp::GT && type <= ir::BinOp::NEQ) { // a ( < | <= | > | >= | != | == ) b 
         std::cout << "    cmp eax, DWORD PTR -" << right.second << "[rbp]\n";
         switch (type) {
         case ir::BinOp::GT:
@@ -74,15 +69,10 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         case ir::BinOp::NEQ:
             std::cout << "    setne al\n";
             break;
-        default:
-            break;
         }
         std::cout << "    movzx   eax, al\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-        return;
-    }
-
-    if (type == ir::BinOp::AND) {
+    } else if (type == ir::BinOp::AND) { // a && b
         std::string block1 = ".AND" + std::to_string(currentCompBlock);
         currentCompBlock++;
         std::string block2 = ".AND" + std::to_string(currentCompBlock);
@@ -99,19 +89,15 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         std::cout << "    mov   eax, 0\n";
         std::cout << "    jmp " << block2 << "\n";
 
-
         std::cout << block2 << ":\n";
         std::cout << "    movzx   eax, al\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-        return;
-    }
-
-    if (type == ir::BinOp::OR) {
+    } else if (type == ir::BinOp::OR) { // a || b
         std::string block1 = ".OR" + std::to_string(currentCompBlock);
         currentCompBlock++;
         std::string block2 = ".OR" + std::to_string(currentCompBlock);
         currentCompBlock++;
-         std::string block3 = ".OR" + std::to_string(currentCompBlock);
+        std::string block3 = ".OR" + std::to_string(currentCompBlock);
         currentCompBlock++;
 
         std::cout << "    cmp DWORD PTR -" << left.second << "[rbp], 0\n";
@@ -119,49 +105,44 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         std::cout << "    cmp DWORD PTR -" << right.second << "[rbp], 0\n";
         std::cout << "    je " << block2 << "\n";
         std::cout << "    jmp " << block1 << "\n";
-      
 
         std::cout << block1 << ":\n";
         std::cout << "    mov   eax, 1\n";
-        std::cout << "    jmp " << block3<< "\n";
-
+        std::cout << "    jmp " << block3 << "\n";
 
         std::cout << block2 << ":\n";
         std::cout << "    mov   eax, 0\n";
-        std::cout << "    jmp " << block3<< "\n";
-
+        std::cout << "    jmp " << block3 << "\n";
 
         std::cout << block3 << ":\n";
         std::cout << "    movzx   eax, al\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-        
-        return;
+    } else {
+        std::string instr = "ERR";
+        switch (type) {
+            case ir::BinOp::ADD:
+                instr = "add";
+                break;
+            case ir::BinOp::SUB:
+                instr = "sub";
+                break;
+            case ir::BinOp::MUL:
+                instr = "imul";
+                break;
+            case ir::BinOp::OR_BIN:
+                instr = "or";
+                break;
+            case ir::BinOp::XOR_BIN:
+                instr = "xor";
+                break;
+            case ir::BinOp::AND_BIN:
+                instr = "and";
+                break;
+        }
+        std::cout << "    " << instr << " eax, DWORD PTR -" << right.second
+                << "[rbp]\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
     }
-    std::string instr = "ERR";
-    switch (type) {
-    case ir::BinOp::ADD:
-        instr = "add";
-        break;
-    case ir::BinOp::SUB:
-        instr = "sub";
-        break;
-    case ir::BinOp::MUL:
-        instr = "imul";
-        break;
-    case ir::BinOp::OR_BIN:
-        instr = "or";
-        break;
-    case ir::BinOp::XOR_BIN:
-        instr = "xor";
-        break;
-    case ir::BinOp::AND_BIN:
-        instr = "and";
-        break;
-    }
-
-    std::cout << "    " << instr << " eax, DWORD PTR -" << right.second
-              << "[rbp]\n";
-    std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
 }
 
 void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
@@ -169,29 +150,40 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     Variable to = scope.getVariable(unaryop.getTo()).value();
     Variable from = scope.getVariable(unaryop.getFrom()).value();
 
-    if (unaryop.getType() == ir::UnaryOp::NEG){
+    switch (unaryop.getType()) {
+    case ir::UnaryOp::NEG: // -a
+
         std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
         std::cout << "    neg eax\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-    } else if (unaryop.getType() == ir::UnaryOp::PRE_DEC){
+        break;
+    case ir::UnaryOp::PRE_DEC: // --a
+
         std::cout << "    dec DWORD PTR -" << from.second << "[rbp]\n";
-    } else if (unaryop.getType() == ir::UnaryOp::PRE_INC){
+        break;
+    case ir::UnaryOp::PRE_INC: // ++a
+
         std::cout << "    inc DWORD PTR -" << from.second << "[rbp]\n";
-    } else if (unaryop.getType() == ir::UnaryOp::POST_DEC){ // b = a-- 
+        break;
+    case ir::UnaryOp::POST_DEC: // a--
 
-        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n"; // On met a dans eax
-        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";   // on met eax dans b;
-        std::cout << "    dec DWORD PTR -" << from.second << "[rbp]\n";      // On decremente a   
+        std::cout << "    mov eax, DWORD PTR -" << from.second
+                  << "[rbp]\n"; // On met a dans eax
+        std::cout << "    mov DWORD PTR -" << to.second
+                  << "[rbp], eax\n"; // on met eax dans b;
+        std::cout << "    dec DWORD PTR -" << from.second
+                  << "[rbp]\n"; // On decremente a
+        break;
+    case ir::UnaryOp::POST_INC: // a++
 
-    } else if (unaryop.getType() == ir::UnaryOp::POST_INC){ // b = a++ 
-
-        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n"; // On met a dans eax
-        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";   // on met eax dans b;
-        std::cout << "    inc DWORD PTR -" << from.second << "[rbp]\n";      // On incremente a   
-        
-
+        std::cout << "    mov eax, DWORD PTR -" << from.second
+                  << "[rbp]\n"; // On met a dans eax
+        std::cout << "    mov DWORD PTR -" << to.second
+                  << "[rbp], eax\n"; // on met eax dans b;
+        std::cout << "    inc DWORD PTR -" << from.second 
+                  << "[rbp]\n"; // On incremente a
+        break;
     }
-
 }
 
 void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
