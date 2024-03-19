@@ -106,7 +106,37 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         return;
     }
 
+    if (type == ir::BinOp::OR) {
+        std::string block1 = ".OR" + std::to_string(currentCompBlock);
+        currentCompBlock++;
+        std::string block2 = ".OR" + std::to_string(currentCompBlock);
+        currentCompBlock++;
+         std::string block3 = ".OR" + std::to_string(currentCompBlock);
+        currentCompBlock++;
 
+        std::cout << "    cmp DWORD PTR -" << left.second << "[rbp], 0\n";
+        std::cout << "    jne " << block1 << "\n";
+        std::cout << "    cmp DWORD PTR -" << right.second << "[rbp], 0\n";
+        std::cout << "    je " << block2 << "\n";
+        std::cout << "    jmp " << block1 << "\n";
+      
+
+        std::cout << block1 << ":\n";
+        std::cout << "    mov   eax, 1\n";
+        std::cout << "    jmp " << block3<< "\n";
+
+
+        std::cout << block2 << ":\n";
+        std::cout << "    mov   eax, 0\n";
+        std::cout << "    jmp " << block3<< "\n";
+
+
+        std::cout << block3 << ":\n";
+        std::cout << "    movzx   eax, al\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+        
+        return;
+    }
     std::string instr = "ERR";
     switch (type) {
     case ir::BinOp::ADD:
