@@ -162,11 +162,10 @@ if args.debug:
 
 ######################################################################################
 ## TEST step: actually compile all test-cases with both compilers
-
+nbOk = 0
 for jobname in jobs:
     os.chdir(orig_cwd)
 
-    print('TEST-CASE: '+jobname)
     os.chdir(jobname)
     
     ## Reference compiler = GCC
@@ -184,14 +183,18 @@ for jobname in jobs:
     
     if gccstatus != 0 and ifccstatus != 0:
         ## ifcc correctly rejects invalid program -> test-case ok
-        print("TEST OK")
+        #print('TEST-CASE: '+jobname)
+        #print("TEST OK")
+        nbOk = nbOk + 1
         continue
     elif gccstatus != 0 and ifccstatus == 0:
         ## ifcc wrongly accepts invalid program -> error
+        print('TEST-CASE: '+jobname)
         print("TEST FAIL (your compiler accepts an invalid program)")
         continue
     elif gccstatus == 0 and ifccstatus != 0:
         ## ifcc wrongly rejects valid program -> error
+        print('TEST-CASE: '+jobname)
         print("TEST FAIL (your compiler rejects a valid program)")
         if args.verbose:
             dumpfile("ifcc-compile.txt")
@@ -200,6 +203,7 @@ for jobname in jobs:
         ## ifcc accepts to compile valid program -> let's link it
         ldstatus=command("gcc -o exe-ifcc asm-ifcc.s", "ifcc-link.txt")
         if ldstatus:
+            print('TEST-CASE: '+jobname)
             print("TEST FAIL (your compiler produces incorrect assembly)")
             if args.verbose:
                 dumpfile("ifcc-link.txt")
@@ -219,4 +223,9 @@ for jobname in jobs:
         continue
 
     ## last but not least
-    print("TEST OK")
+    #print('TEST-CASE: '+jobname)
+    #print("TEST OK")
+    nbOk = nbOk + 1
+
+print("\nfin des test !")
+print(nbOk, "tests OK sur", len(jobs))
