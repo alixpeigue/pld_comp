@@ -28,7 +28,7 @@ expression: INT_CONST # intConst |
             expression '|' expression # orBin |
             expression '&&' expression #and |
             expression '||' expression #or |
-            VARIABLE op = ('=' | '+=' | '-=' | '*=' | '/=') expression  # affect |
+            VARIABLE op = ('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '^=' | '|=') expression  # affect |
             VARIABLE '++' #postInc |
             VARIABLE '--' #postDec ;
 

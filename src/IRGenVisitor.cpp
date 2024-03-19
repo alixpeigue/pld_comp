@@ -93,12 +93,47 @@ antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
     return ctx->VARIABLE()->getText();
 }
 
-antlrcpp::Any IRGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
-    std::string to = ctx->VARIABLE()->getText();
-    std::string from = (std::string)this->visit(ctx->expression());
-    auto instruction = std::make_unique<ir::Affect>(to, from);
-    this->currentBlock->addInstr(std::move(instruction));
-    return from;
+antlrcpp::Any IRGenVisitor::visitAffect(ifccParser::AffectContext *ctx) { // a op b
+    std::string to = ctx->VARIABLE()->getText(); //a 
+    std::string from = (std::string)this->visit(ctx->expression());// b
+
+    std::unique_ptr<ir::IRInstr> instructionAffect;
+    if (ctx->op->getText() == "=") { //a = b
+        instructionAffect = std::make_unique<ir::Affect>(to, from);
+    } else
+        {
+            //creer le temp
+            ++counterTempVariables;
+            std::string tmpTo = "#" + std::to_string(counterTempVariables);
+            this->currentBlock->getScope().addVariable(tmpTo, INT);
+
+            //declare l'instruction operation
+            ir::BinOp::BinOpType operateur;
+            if (ctx->op->getText() == "+=") {
+                operateur = ir::BinOp::ADD;
+            } else if (ctx->op->getText() == "-=") {
+                operateur = ir::BinOp::SUB;
+            } else if (ctx->op->getText() == "*=") {
+                operateur = ir::BinOp::MUL;
+            } else if (ctx->op->getText() == "/=") {
+                operateur = ir::BinOp::DIV;
+            } else if (ctx->op->getText() == "&=") {
+                operateur = ir::BinOp::AND_BIN;
+            } else if (ctx->op->getText() == "^=") {
+                operateur = ir::BinOp::XOR_BIN;
+            } else if (ctx->op->getText() == "|=") {
+                operateur = ir::BinOp::OR_BIN;
+            }
+            std::unique_ptr<ir::IRInstr> instructionOperation =
+                std::make_unique<ir::BinOp>(operateur, tmpTo, to, from);
+            instructionAffect = std::make_unique<ir::Affect>(to, tmpTo);
+
+            // ajoute l'instruction operation
+            this->currentBlock->addInstr(std::move(instructionOperation));
+        }
+
+    this->currentBlock->addInstr(std::move(instructionAffect));
+    return to;
 }
 
 antlrcpp::Any IRGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
