@@ -10,6 +10,9 @@ class IRGenVisitor : public ifccBaseVisitor {
 public:
     IRGenVisitor(std::vector<std::unique_ptr<ir::CFG>> &ir) : ir(ir){};
 
+
+    virtual antlrcpp::Any visitAxiom(ifccParser::AxiomContext *ctx) override;
+
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
 
     virtual antlrcpp::Any visitScope(ifccParser::ScopeContext *ctx) override;
@@ -22,6 +25,10 @@ public:
 
     virtual antlrcpp::Any visitDo_while_stmt(
         ifccParser::Do_while_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitBreak_stmt(ifccParser::Break_stmtContext *ctx) override;
 
     virtual antlrcpp::Any visitFunc_call(
         ifccParser::Func_callContext *ctx) override;

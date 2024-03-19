@@ -1,3 +1,4 @@
+#include "CustomExceptions.h"
 #include "IRGenVisitor.h"
 #include "Scope.h"
 #include "ifccParser.h"
@@ -5,6 +6,25 @@
 #include "support/Any.h"
 #include <memory>
 #include <string>
+
+antlrcpp::Any IRGenVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
+    try {
+        visitChildren(ctx);
+    } catch (const ReturnException &e) {
+        std::cerr << "'return' ne peut pas se trouver en dehors du programme\n";
+        exit(1);
+    } catch (const ContinueException &e) {
+        std::cerr
+            << "'continue' ne peut pas se trouver en dehors d'une boucle\n";
+        exit(1);
+    } catch (const BreakException &e) {
+        std::cerr << "'break' ne peut pas se trouver en dehors d'une boucle ou "
+                     "d'un switch\n";
+        exit(1);
+    }
+
+    return 0;
+}
 
 antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
 
@@ -93,7 +113,7 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     try {
         this->visit(ctx->then_stmt);
-    } catch (const std::exception &) {
+    } catch (const ReturnException &) {
     }
 
     // Move to the 'else' block to generate code for the 'else' branch (if any).
@@ -106,7 +126,7 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
         try {
             this->visit(ctx->else_stmt);
-        } catch (const std::exception &) {
+        } catch (const ReturnException &) {
         }
 
         this->currentBlock = end;
@@ -119,6 +139,7 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 // Visits a while loop statement.
 antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     ifccParser::While_stmtContext *ctx) {
+
     // Retrieve the current scope.
     Scope &currentScope = this->currentBlock->getScope();
 
@@ -157,8 +178,12 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     // Generate code for the loop body.
     try {
         this->visit(ctx->then_stmt);
-    } catch (std::exception &e) {
-    };
+    } catch (const ReturnException &e) {
+    } catch (const BreakException &e) {
+        currentBlock->setNext(
+            std::make_unique<ir::UnconditionalJump>(elseBlock));
+    } catch (const ContinueException &e) {
+    }
 
     // Move to the 'else' block.
     this->currentBlock = elseBlock;
@@ -170,6 +195,7 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
 // Visits a do-while loop statement.
 antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     ifccParser::Do_while_stmtContext *ctx) {
+
     // Retrieve the current scope.
     Scope &currentScope = this->currentBlock->getScope();
 
@@ -206,13 +232,35 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
         // Set the next block for the condition block to be the conditional
         // jump.
         this->currentBlock->setNext(std::move(conditional));
-    } catch (std::exception &e) {
+    } catch (const ReturnException &e) {
+    } catch (const BreakException &e) {
+    } catch (const ContinueException &e) {
+        // Generate code for the loop condition.
+        std::string condition = this->visit(ctx->expression());
+        // Create a conditional jump based on the loop condition.
+        auto conditional = std::make_unique<ir::ConditionalJump>(
+            std::move(condition), thenBlock, elseBlock);
+        // Set the next block for the condition block to be the conditional
+        // jump.
+        this->currentBlock->setNext(std::move(conditional));
     }
 
     // Move to the 'else' block.
     this->currentBlock = elseBlock;
 
     // Return 0, indicating successful visitation.
+    return 0;
+}
+
+antlrcpp::Any IRGenVisitor::visitContinue_stmt(
+    ifccParser::Continue_stmtContext *ctx) {
+    throw ContinueException();
+    return 0;
+}
+
+antlrcpp::Any IRGenVisitor::visitBreak_stmt(
+    ifccParser::Break_stmtContext *ctx) {
+    throw BreakException();
     return 0;
 }
 
@@ -272,7 +320,7 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
     try {
         // Visit children nodes to generate IR code.
         this->visitChildren(ctx);
-    } catch (const std::exception &) {
+    } catch (const ReturnException &) {
     }
 
     // Add epilogue block to the function.
@@ -294,7 +342,7 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(
         &this->currentFunction->getEpilogue()));
 
-    throw std::exception();
+    throw ReturnException();
 
     return 0;
 }
