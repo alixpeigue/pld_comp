@@ -52,7 +52,16 @@ public:
     virtual antlrcpp::Any visitAndBin(ifccParser::AndBinContext *ctx) override;
 
     virtual antlrcpp::Any visitAnd(ifccParser::AndContext *ctx) override ;
+
     virtual antlrcpp::Any visitOr(ifccParser::OrContext *ctx) override;
+
+    //virtual antlrcpp::Any visitPostDec(ifccParser::PostDecContext *ctx) override;
+
+    virtual antlrcpp::Any visitPreInc(ifccParser::PreIncContext *ctx) override;
+
+    //virtual antlrcpp::Any visitPostInc(ifccParser::PostIncContext *ctx) override;
+
+    virtual antlrcpp::Any visitPreDec(ifccParser::PreDecContext *ctx) override;
 
 
 private:

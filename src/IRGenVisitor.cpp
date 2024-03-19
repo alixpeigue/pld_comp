@@ -290,3 +290,19 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }
+
+antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_INC, from, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return from;
+}
+
+antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_DEC, from, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return from;
+}

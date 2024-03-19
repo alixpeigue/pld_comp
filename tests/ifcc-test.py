@@ -14,6 +14,27 @@
 #
 #
 
+def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', "\033[0K\r", end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
+
 import argparse
 import glob
 import os
@@ -163,9 +184,11 @@ if args.debug:
 ######################################################################################
 ## TEST step: actually compile all test-cases with both compilers
 nbOk = 0
+nbTest = 0
+errorText = "\n"
 for jobname in jobs:
+    nbTest = nbTest + 1
     os.chdir(orig_cwd)
-
     os.chdir(jobname)
     
     ## Reference compiler = GCC
@@ -189,13 +212,13 @@ for jobname in jobs:
         continue
     elif gccstatus != 0 and ifccstatus == 0:
         ## ifcc wrongly accepts invalid program -> error
-        print('TEST-CASE: '+jobname)
-        print("TEST FAIL (your compiler accepts an invalid program)")
+        errorText = errorText + 'TEST-CASE: '+jobname
+        errorText = errorText + "\nTEST FAIL (your compiler accepts an invalid program)"
         continue
     elif gccstatus == 0 and ifccstatus != 0:
         ## ifcc wrongly rejects valid program -> error
-        print('TEST-CASE: '+jobname)
-        print("TEST FAIL (your compiler rejects a valid program)")
+        errorText = errorText + 'TEST-CASE: '+jobname
+        errorText = errorText + "\nTEST FAIL (your compiler rejects a valid program)"
         if args.verbose:
             dumpfile("ifcc-compile.txt")
         continue
@@ -203,8 +226,8 @@ for jobname in jobs:
         ## ifcc accepts to compile valid program -> let's link it
         ldstatus=command("gcc -o exe-ifcc asm-ifcc.s", "ifcc-link.txt")
         if ldstatus:
-            print('TEST-CASE: '+jobname)
-            print("TEST FAIL (your compiler produces incorrect assembly)")
+            errorText = errorText + 'TEST-CASE: '+jobname
+            errorText = errorText + "\nTEST FAIL (your compiler produces incorrect assembly)"
             if args.verbose:
                 dumpfile("ifcc-link.txt")
             continue
@@ -226,6 +249,7 @@ for jobname in jobs:
     #print('TEST-CASE: '+jobname)
     #print("TEST OK")
     nbOk = nbOk + 1
+    printProgressBar(nbTest, len(jobs), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-print("\nfin des test !")
+print(errorText)
 print(nbOk, "tests OK sur", len(jobs))

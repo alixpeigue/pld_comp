@@ -15,6 +15,8 @@ expression: INT_CONST # intConst |
             CHAR_CONST #charConst | 
             VARIABLE # variable |
             '(' expression ')' #paren |
+            '++' VARIABLE #preInc |
+            '--' VARIABLE #preDec |
             op = ('-' | '+') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
@@ -26,7 +28,9 @@ expression: INT_CONST # intConst |
             expression '|' expression # orBin |
             expression '&&' expression #and |
             expression '||' expression #or |
-            VARIABLE '=' expression  # affect;
+            VARIABLE '=' expression  # affect |
+            VARIABLE '++' #postInc |
+            VARIABLE '--' #postDec ;
 
 RETURN : 'return' ;
 INT_CONST : [-]?[0-9]+ ;

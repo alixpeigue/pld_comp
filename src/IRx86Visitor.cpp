@@ -169,15 +169,16 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     Variable to = scope.getVariable(unaryop.getTo()).value();
     Variable from = scope.getVariable(unaryop.getFrom()).value();
 
-    std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
-
-    switch (unaryop.getType()) {
-    case ir::UnaryOp::NEG:
-        std::cout << "neg eax\n";
-        break;
+    if (unaryop.getType() == ir::UnaryOp::NEG){
+        std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
+        std::cout << "    neg eax\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+    } else if (unaryop.getType() == ir::UnaryOp::PRE_DEC){
+        std::cout << "    dec DWORD PTR -" << from.second << "[rbp]\n";
+    } else if (unaryop.getType() == ir::UnaryOp::PRE_INC){
+        std::cout << "    inc DWORD PTR -" << from.second << "[rbp]\n";
     }
 
-    std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
 }
 
 void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
