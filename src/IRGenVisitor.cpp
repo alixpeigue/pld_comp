@@ -224,16 +224,14 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     try {
         // Generate code for the loop body.
         this->visit(ctx->then_stmt);
-    } catch (std::exception &e) {
-    }
-
-    // Generate code for the loop condition.
-    std::string condition = this->visit(ctx->expression());
-    // Create a conditional jump based on the loop condition.
-    auto conditional = std::make_unique<ir::ConditionalJump>(
-        std::move(condition), thenBlock, elseBlock);
-    // Set the next block for the condition block to be the conditional jump.
-    this->currentBlock->setNext(std::move(conditional));
+        // Generate code for the loop condition.
+        std::string condition = this->visit(ctx->expression());
+        // Create a conditional jump based on the loop condition.
+        auto conditional = std::make_unique<ir::ConditionalJump>(
+            std::move(condition), thenBlock, elseBlock);
+        // Set the next block for the condition block to be the conditional jump.
+        this->currentBlock->setNext(std::move(conditional));
+    } catch (std::exception &e) {}
 
     // Move to the 'else' block.
     this->currentBlock = elseBlock;
