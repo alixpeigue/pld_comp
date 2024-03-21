@@ -13,27 +13,19 @@
 # - in the TEST step, we actually run GCC and IFCC on each test-case
 #
 #
-
-def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-    """
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', "\033[0K\r", end = printEnd)
-    # Print New Line on Complete
-    if iteration == total: 
-        print()
+def printProgressBar(act, total, nbOk):
+    nbFail = act - nbOk
+    nbCase = int(30)
+    taux = act/total
+    nbARemplir = int(taux * nbCase)
+    barStr = "Progress : ["
+    for i in range(nbCase):
+        if i < nbARemplir:
+            barStr = barStr + '#' # '█'
+        else:
+            barStr = barStr + '-'
+    barStr = barStr + f"] {taux*100:3.0f}%  OK : {nbOk:2}  Failed : {nbFail:2}"
+    print(barStr, "\033[0K\r", end = "\r")
 
 import argparse
 import glob
@@ -123,7 +115,7 @@ if len(inputfilenames) == 0:
     print("error: found no test-case in: "+" ".join(args.input))
     sys.exit(1)
 
-## Here we check that  we can actually read the files.  Our goal is to
+## Here we check that we can actually read the files. Our goal is to
 ## fail as early as possible when the CLI arguments are wrong.
 for inputfilename in inputfilenames:
     try:
@@ -162,7 +154,9 @@ for inputfilename in inputfilenames:
     
     ## each test-case gets copied and processed in its own subdirectory:
     ## ../somedir/subdir/file.c becomes ./ifcc-test-output/somedir-subdir-file/input.c
-    subdir='ifcc-test-output/'+inputfilename.strip("./")[:-2].replace('/','-')
+    lastDir = inputfilename.split('/')
+    lastDir = lastDir[-2] + '--' + lastDir[-1]
+    subdir='ifcc-test-output/'+lastDir.strip("./")[:-2].replace('/','-')
     os.mkdir(subdir)
     shutil.copyfile(inputfilename, subdir+'/input.c')
     jobs.append(subdir)
@@ -183,13 +177,16 @@ if args.debug:
 
 ######################################################################################
 ## TEST step: actually compile all test-cases with both compilers
+
 nbOk = 0
 nbTest = 0
-errorText = "\n"
+errorText = "\n\n"
 for jobname in jobs:
+    printProgressBar(nbTest, len(jobs), nbOk)
     nbTest = nbTest + 1
     os.chdir(orig_cwd)
     os.chdir(jobname)
+    jobname = jobname[33:]
     
     ## Reference compiler = GCC
     gccstatus=command("gcc -S -masm=intel -o asm-gcc.s input.c", "gcc-compile.txt")
@@ -212,13 +209,11 @@ for jobname in jobs:
         continue
     elif gccstatus != 0 and ifccstatus == 0:
         ## ifcc wrongly accepts invalid program -> error
-        errorText = errorText + 'TEST-CASE: '+jobname
-        errorText = errorText + "\nTEST FAIL (your compiler accepts an invalid program)"
+        errorText = errorText + '[' + jobname + "] : your compiler accepts an invalid program\n"
         continue
     elif gccstatus == 0 and ifccstatus != 0:
         ## ifcc wrongly rejects valid program -> error
-        errorText = errorText + 'TEST-CASE: '+jobname
-        errorText = errorText + "\nTEST FAIL (your compiler rejects a valid program)"
+        errorText = errorText + '[' + jobname  + "] : your compiler rejects a valid program\n"
         if args.verbose:
             dumpfile("ifcc-compile.txt")
         continue
@@ -226,8 +221,7 @@ for jobname in jobs:
         ## ifcc accepts to compile valid program -> let's link it
         ldstatus=command("gcc -o exe-ifcc asm-ifcc.s", "ifcc-link.txt")
         if ldstatus:
-            errorText = errorText + 'TEST-CASE: '+jobname
-            errorText = errorText + "\nTEST FAIL (your compiler produces incorrect assembly)"
+            errorText = errorText + '[' + jobname + "] : your compiler produces incorrect assembly\n"
             if args.verbose:
                 dumpfile("ifcc-link.txt")
             continue
@@ -237,7 +231,7 @@ for jobname in jobs:
         
     command("./exe-ifcc","ifcc-execute.txt")
     if open("gcc-execute.txt").read() != open("ifcc-execute.txt").read() :
-        print("TEST FAIL (different results at execution)")
+        errorText = errorText + '[' + jobname + "] : different results at execution\n"
         if args.verbose:
             print("GCC:")
             dumpfile("gcc-execute.txt")
@@ -249,7 +243,9 @@ for jobname in jobs:
     #print('TEST-CASE: '+jobname)
     #print("TEST OK")
     nbOk = nbOk + 1
-    printProgressBar(nbTest, len(jobs), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
-print(errorText)
-print(nbOk, "tests OK sur", len(jobs))
+printProgressBar(nbTest, len(jobs), nbOk)
+if (nbTest != nbOk):
+    print(errorText)
+else:
+    print("\n")

@@ -49,11 +49,6 @@ int main(int argn, const char **argv) {
         cerr << "error: syntax error during parsing" << endl;
         exit(1);
     }
-
-    // SymbolsTableVisitor symbolsTable;
-    // symbolsTable.visit(tree);
-    // CodeGenVisitor v(symbolsTable.getMap());
-    // v.visit(tree);
     
     vector<std::unique_ptr<ir::CFG>> ir; //liste de graphe (un graphe = une fonction)
     IRGenVisitor v1(ir);

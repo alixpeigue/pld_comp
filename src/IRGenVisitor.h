@@ -6,7 +6,7 @@
 #include "ir.h"
 #include "support/Any.h"
 
-//Linearise le code vers notre IR
+// Linearise le code vers notre IR
 class IRGenVisitor : public ifccBaseVisitor {
 public:
     IRGenVisitor(std::vector<std::unique_ptr<ir::CFG>> &ir) : ir(ir){};
@@ -41,9 +41,11 @@ public:
 
     virtual antlrcpp::Any visitShift(ifccParser::ShiftContext *ctx) override;
 
-    virtual antlrcpp::Any visitCompare(ifccParser::CompareContext *ctx) override;
+    virtual antlrcpp::Any visitCompare(
+        ifccParser::CompareContext *ctx) override;
 
-    virtual antlrcpp::Any visitCompareEq(ifccParser::CompareEqContext *ctx) override;
+    virtual antlrcpp::Any visitCompareEq(
+        ifccParser::CompareEqContext *ctx) override;
 
     virtual antlrcpp::Any visitXorBin(ifccParser::XorBinContext *ctx) override;
 
@@ -51,18 +53,19 @@ public:
 
     virtual antlrcpp::Any visitAndBin(ifccParser::AndBinContext *ctx) override;
 
-    virtual antlrcpp::Any visitAnd(ifccParser::AndContext *ctx) override ;
+    virtual antlrcpp::Any visitAnd(ifccParser::AndContext *ctx) override;
 
     virtual antlrcpp::Any visitOr(ifccParser::OrContext *ctx) override;
 
-    virtual antlrcpp::Any visitPostDec(ifccParser::PostDecContext *ctx) override;
+    virtual antlrcpp::Any visitPostDec(
+        ifccParser::PostDecContext *ctx) override;
 
     virtual antlrcpp::Any visitPreInc(ifccParser::PreIncContext *ctx) override;
 
-    virtual antlrcpp::Any visitPostInc(ifccParser::PostIncContext *ctx) override;
+    virtual antlrcpp::Any visitPostInc(
+        ifccParser::PostIncContext *ctx) override;
 
     virtual antlrcpp::Any visitPreDec(ifccParser::PreDecContext *ctx) override;
-
 
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
