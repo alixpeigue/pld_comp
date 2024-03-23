@@ -7,37 +7,11 @@
 #include <string>
 
 antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
-    // Create the main function in the intermediate representation (IR).
-    this->currentFunction = std::make_unique<ir::CFG>("main");
 
-    // Create a global scope for the program.
-    Scope *scope = new Scope(nullptr);
-    this->currentFunction->addScope(std::unique_ptr<Scope>(scope));
-
-    // Create the initial basic block for the program.
-    std::string name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-
-    this->currentBlock = new ir::BasicBlock(scope, std::move(name));
-    this->currentFunction->addBlock(
-        std::unique_ptr<ir::BasicBlock>(this->currentBlock));
-
-    // Create the epilogue block for the main function.
-    ir::BasicBlock *epilogue = new ir::BasicBlock(scope, ".main_ret");
-    epilogue->setNext(std::make_unique<ir::Return>());
-    this->currentFunction->setEpilogue(epilogue);
-
-    currentBlock->getScope().addVariable("#return", INT);
-    currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(epilogue));
-
-    try {
-        this->visitChildren(ctx);
-    } catch (const std::exception &) {
+    for (const auto &func : ctx->function()) {
+        visit(func);
     }
 
-    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(epilogue));
-    // Push the main function to the list of functions in the IR.
-    this->ir.push_back(std::move(this->currentFunction));
     return 0;
 }
 
@@ -229,9 +203,11 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
         // Create a conditional jump based on the loop condition.
         auto conditional = std::make_unique<ir::ConditionalJump>(
             std::move(condition), thenBlock, elseBlock);
-        // Set the next block for the condition block to be the conditional jump.
+        // Set the next block for the condition block to be the conditional
+        // jump.
         this->currentBlock->setNext(std::move(conditional));
-    } catch (std::exception &e) {}
+    } catch (std::exception &e) {
+    }
 
     // Move to the 'else' block.
     this->currentBlock = elseBlock;
@@ -254,6 +230,57 @@ antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
     this->currentBlock->getScope().addVariable(tempVarName, INT);
 
     return tempVarName;
+}
+
+antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
+    std::string funcName = ctx->VARIABLE(0)->getText();
+
+    // Create the function in the intermediate representation (IR).
+    this->currentFunction = std::make_unique<ir::CFG>(funcName);
+
+    // Create a scope for the function.
+    Scope *scope = new Scope(nullptr);
+    this->currentFunction->addScope(std::unique_ptr<Scope>(scope));
+
+    // Create the initial basic block for the function.
+    std::string name = ".BB" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+
+    // Create current block and add it to the function.
+    this->currentBlock = new ir::BasicBlock(scope, std::move(name));
+    this->currentFunction->addBlock(
+        std::unique_ptr<ir::BasicBlock>(this->currentBlock));
+
+    // Create the epilogue block for the function.
+    ir::BasicBlock *epilogue =
+        new ir::BasicBlock(scope, "." + funcName + "_ret");
+    epilogue->setNext(std::make_unique<ir::Return>());
+    this->currentFunction->setEpilogue(epilogue);
+    this->currentBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(epilogue));
+
+    // Keep track of arguments and add them to the scope
+    for (size_t i = 1; i < ctx->VARIABLE().size(); ++i) {
+        this->currentFunction->addArg(ctx->VARIABLE(i)->getText(), INT);
+        this->currentBlock->getScope().addVariable(ctx->VARIABLE(i)->getText(),
+                                                   INT);
+    }
+
+    // Add a variable "#return" to the current block's scope.
+    this->currentBlock->getScope().addVariable("#return", INT);
+
+    try {
+        // Visit children nodes to generate IR code.
+        this->visitChildren(ctx);
+    } catch (const std::exception &) {
+    }
+
+    // Add epilogue block to the function.
+    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(epilogue));
+    // Push the function to the list of functions in the IR.
+    this->ir.push_back(std::move(this->currentFunction));
+
+    return funcName;
 }
 
 antlrcpp::Any IRGenVisitor::visitReturn_stmt(

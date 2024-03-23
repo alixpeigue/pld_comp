@@ -101,11 +101,14 @@ public:
         return blocks;
     }
     uint32_t getSize();
+    void addArg(const std::string &name, VarType type) { args.push_back(std::make_pair(name, type)); }
+    const std::vector<std::pair<std::string, VarType>> &getArgs() const { return args; }
     // Scope *mcainScope;
 
 protected:
     std::vector<std::unique_ptr<BasicBlock>> blocks;
     std::vector<std::unique_ptr<Scope>> scopes;
+    std::vector<std::pair<std::string, VarType>> args;
     BasicBlock *epilogue;
     std::string name;
 };
@@ -177,9 +180,10 @@ protected:
 
 class Call : public IRInstr {
 public:
-    Call(const std::string &func_name, const std::string &ret) : func_name(func_name), ret(ret) {}
+    Call(const std::string &func_name, const std::string &ret)
+        : func_name(func_name), ret(ret) {}
     virtual void accept(IRBaseVisitor &visitor) override;
-    void addName(const std::string &name) {names.push_back(name);}
+    void addName(const std::string &name) { names.push_back(name); }
     const std::string &getFunc_name() const { return func_name; }
     const std::vector<std::string> &getNames() const { return names; }
     const std::string &getRet() { return ret; }

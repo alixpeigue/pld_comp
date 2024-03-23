@@ -2,9 +2,10 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : 'int' 'main' '(' ')' '{' statement* '}' ;
+prog : function* ;
 
 statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop ;
+function : 'int' VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
 
 scope : '{' statement* '}' ;
 

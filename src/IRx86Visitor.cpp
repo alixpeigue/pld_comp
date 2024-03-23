@@ -93,12 +93,17 @@ void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
 
 void IRx86Visitor::visitCFG(ir::CFG &cfg) {
 
+    std::vector<std::string> regs = { "edi", "esi", "edx", "ecx", "r8d", "r9d" };
     // prelude
     std::cout << ".globl " << cfg.getName() << "\n";
     std::cout << cfg.getName() << ":\n";
     std::cout << "    push rbp\n";
     std::cout << "    mov rbp, rsp\n";
     std::cout << "    sub rsp, " << cfg.getSize() << '\n';
+
+    for (size_t i = 0; i < cfg.getArgs().size() && i < regs.size(); ++i) {
+        std::cout << "    mov DWORD PTR -" << cfg.getBlocks()[0]->getScope().getVariable(cfg.getArgs()[i].first).value().second << "[rbp], " << regs[i] << '\n';
+    }
 
     // blocks
     for (auto &block : cfg.getBlocks()) {
@@ -130,7 +135,7 @@ void IRx86Visitor::visitReturn(ir::Return &ret) {
 }
 
 void IRx86Visitor::visitCall(ir::Call &call) {
-    std::vector<std::string> regs = { "rdi", "rsi", "rdx", "rcx", "r8", "r9" };
+    std::vector<std::string> regs = { "edi", "esi", "edx", "ecx", "r8d", "r9d" };
 
     if (call.getNames().size() > regs.size() && ((call.getNames().size() * 4) % 16) != 0) {
         std::cout << "    sub rsp, 8\n";
@@ -138,11 +143,11 @@ void IRx86Visitor::visitCall(ir::Call &call) {
 
     size_t i;
     for (i = 0; i < call.getNames().size() && i < regs.size(); ++i) {
-        std::cout << "    mov " << regs[i] << ", QWORD PTR -" << call.getBlock().getScope().getVariable(call.getNames()[i]).value().second << "[rbp]\n";
+        std::cout << "    mov " << regs[i] << ", DWORD PTR -" << call.getBlock().getScope().getVariable(call.getNames()[i]).value().second << "[rbp]\n";
     }
 
     for (; i >= regs.size() && i < call.getNames().size(); ++i) {
-        std::cout << "    push QWORD PTR -" << call.getBlock().getScope().getVariable(call.getNames()[i]).value().second << "[rbp]\n";
+        std::cout << "    push DWORD PTR -" << call.getBlock().getScope().getVariable(call.getNames()[i]).value().second << "[rbp]\n";
     }
 
     std::cout << "    call " << call.getFunc_name() << '\n';
