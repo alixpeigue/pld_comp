@@ -369,10 +369,10 @@ antlrcpp::Any IRGenVisitor::visitBreak_stmt(
  *         la fonction
  */
 antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
+    ++this->counterTempVariables;
     std::string tempVarName = "#" + std::to_string(this->counterTempVariables);
     auto instruction =
         std::make_unique<ir::Call>(ctx->VARIABLE()->getText(), tempVarName);
-    ++this->counterTempVariables;
     for (const auto &expr : ctx->expression()) {
         std::string name = this->visit(expr);
 
