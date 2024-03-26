@@ -179,6 +179,18 @@ void IRx86Visitor::visitCFG(ir::CFG &cfg) {
            << "[rbp], " << regs[i] << '\n';
     }
 
+    for (size_t i = regs.size(); i < cfg.getArgs().size(); ++i) {
+        std::cout << "    mov eax, DWORD PTR +" << (i - regs.size()) * 4 + 16
+                  << "[rbp]\n";
+        std::cout << "    mov DWORD PTR -"
+                  << cfg.getBlocks()[0]
+                         ->getScope()
+                         .getVariable(cfg.getArgs()[i].first)
+                         .value()
+                         .second
+                  << "[rbp], eax\n";
+    }
+
     // blocks
     for (auto &block : cfg.getBlocks()) {
         block->accept(*this);
@@ -271,7 +283,7 @@ void IRx86Visitor::visitCall(ir::Call &call) {
     }
 
     for (; i >= regs.size() && i < call.getNames().size(); ++i) {
-        os << "    push DWORD PTR -"
+        os << "    push QWORD PTR -"
            << call.getBlock()
                   .getScope()
                   .getVariable(call.getNames()[i])
