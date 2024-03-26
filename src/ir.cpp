@@ -1,5 +1,7 @@
 #include "IRBaseVisitor.h"
 #include "ir.h"
+#include <algorithm>
+#include <cstdint>
 #include <iostream>
 
 void ir::BasicBlock::addInstr(std::unique_ptr<IRInstr> instr) {
@@ -40,6 +42,16 @@ void ir::CFG::visitBlocks(IRBaseVisitor &visitor) {
     visitor.visitCFG(*this);
 }
 
+uint32_t ir::CFG::getSize() {
+    uint32_t size = 0;
+    
+    for (const auto &scope: scopes) {
+        size = std::max(size, scope->getSize());
+    }
+
+    return size;
+}
+
 void ir::Affect::accept(IRBaseVisitor &visitor) { visitor.visitAffect(*this); }
 void ir::AffectConst::accept(IRBaseVisitor &visitor) {
     visitor.visitAffectConst(*this);
@@ -53,4 +65,10 @@ void ir::UnconditionalJump::accept(IRBaseVisitor &visitor) {
     visitor.visitUnconditionalJump(*this);
 }
 
+void ir::ConditionalJump::accept(IRBaseVisitor &visitor) {
+    visitor.visitConditionalJump(*this);
+}
+
 void ir::Return::accept(IRBaseVisitor &visitor) { visitor.visitReturn(*this); }
+
+void ir::Call::accept(IRBaseVisitor &visitor) { visitor.visitCall(*this); }

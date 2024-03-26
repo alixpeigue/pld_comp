@@ -49,13 +49,16 @@ int main(int argn, const char **argv) {
         cerr << "error: syntax error during parsing" << endl;
         exit(1);
     }
-    
-    vector<std::unique_ptr<ir::CFG>> ir; //liste de graphe (un graphe = une fonction)
+
+    vector<std::unique_ptr<ir::CFG>>
+        ir; // liste de graphe (un graphe = une fonction)
     IRGenVisitor v1(ir);
-    v1.visit(tree);             //creer l'IR
+    v1.visit(tree); // creer l'IR
 
     std::cout << ".intel_syntax noprefix\n";
     IRx86Visitor v2;
-    ir[0]->visitBlocks(v2);     //print le code dans cout
+    for (const auto &i : ir) {
+        i->visitBlocks(v2);
+    }
     return 0;
 }

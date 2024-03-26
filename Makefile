@@ -4,6 +4,8 @@
 # Then config.mk should be in the .gitignore of your project
 include config.mk
 
+GRAMMAR = grammar/ifcc.g4
+
 CC=g++
 CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
 LDFLAGS=-g
@@ -38,7 +40,7 @@ $(OUT-DIR)/%.o: src/%.cpp generated/ifccParser.cpp
 
 ##########################################
 # compile all the antlr-generated C++
-$(OUT-DIR)/%.o: generated/%.cpp
+ $(OUT-DIR)/%.o: generated/%.cpp $(GRAMMAR)
 	@mkdir -p $(OUT-DIR)
 	$(CC) $(CCFLAGS) -MMD -o $@ $< 
 
@@ -51,9 +53,9 @@ $(OUT-DIR)/%.d:
 generated/ifccLexer.cpp: generated/ifccParser.cpp
 generated/ifccVisitor.cpp: generated/ifccParser.cpp
 generated/ifccBaseVisitor.cpp: generated/ifccParser.cpp
-generated/ifccParser.cpp: grammar/ifcc.g4
+generated/ifccParser.cpp: $(GRAMMAR)
 	@mkdir -p generated
-	$(ANTLR) -visitor -no-listener -Dlanguage=Cpp -o generated grammar/ifcc.g4 -Xexact-output-dir
+	$(ANTLR) -visitor -no-listener -Dlanguage=Cpp -o generated $(GRAMMAR) -Xexact-output-dir
 
 # prevent automatic cleanup of "intermediate" files like ifccLexer.cpp etc
 .PRECIOUS: generated/ifcc%.cpp   
@@ -66,17 +68,17 @@ FILE ?= ../tests/testfiles/1_return42.c
 
 gui:
 	@mkdir -p generated build
-	$(ANTLR) -Dlanguage=Java -o generated ifcc.g4
+	$(ANTLR) -Dlanguage=Java -o generated -Xexact-output-dir $(GRAMMAR)
 	javac -cp $(ANTLRJAR) -d build generated/*.java
 	java -cp $(ANTLRJAR):build org.antlr.v4.gui.TestRig ifcc axiom -gui $(FILE)
 
 ##########################################
 # delete all machine-generated files
 clean:
-	rm -rf $(OUT-DIR) generated
+	rm -rf $(OUT-DIR) generated ifcc-test-output
 	rm -f ifcc
 
 ##########################################
 # Performs all tests
-check: ifcc
+check: all
 	python3 tests/ifcc-test.py tests/testfiles

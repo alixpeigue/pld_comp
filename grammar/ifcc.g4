@@ -2,7 +2,25 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : 'int' 'main' '(' ')' '{' (expression ';' | declaration ';' )* return_stmt '}' ;
+prog : function* ;
+
+statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop | break_stmt | continue_stmt ;
+
+function : 'int' VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
+
+scope : '{' statement* '}' ;
+
+if_stmt : IF '(' expression ')' then_stmt = statement (ELSE else_stmt = statement)? ;
+
+loop : do_while_stmt | while_stmt ;
+
+do_while_stmt : DO then_stmt = statement WHILE '(' expression ')' ';' ;
+
+while_stmt : WHILE '(' expression ')' then_stmt = statement ;
+
+break_stmt : BREAK ';' ;
+
+continue_stmt : CONTINUE ';' ;
 
 declaration: 'int' declaAffect (',' declaAffect)*;
 
@@ -17,7 +35,7 @@ expression: INT_CONST # intConst |
             '(' expression ')' #paren |
             '++' VARIABLE #preInc |
             '--' VARIABLE #preDec |
-            op = ('-' | '+') expression # unaryAdd |
+            op = ('-' | '+' | '!') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
             expression op = ('<<' | '>>') expression #shift |
@@ -30,10 +48,17 @@ expression: INT_CONST # intConst |
             expression '||' expression #or |
             VARIABLE op = ('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '^=' | '|=') expression  # affect |
             VARIABLE '++' #postInc |
-            VARIABLE '--' #postDec ;
+            VARIABLE '--' #postDec |
+            VARIABLE '(' expression? (',' expression)* ')' # func_call ;
 
+IF : 'if' ;
+ELSE : 'else' ;
+DO : 'do' ;
+WHILE : 'while';
 RETURN : 'return' ;
-INT_CONST : [-]?[0-9]+ ;
+BREAK : 'break' ;
+CONTINUE : 'continue' ;
+INT_CONST : [0-9]+ ;
 CHAR_CONST : '\'' . '\'';
 VARIABLE : [a-zA-Z_][a-zA-Z0-9_]* ;
 COMMENT : '/*' .*? '*/' -> skip ;

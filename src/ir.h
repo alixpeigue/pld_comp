@@ -40,7 +40,7 @@ public:
     const std::vector<std::unique_ptr<IRInstr>> &getInstructions() const {
         return instrs;
     }
-    Next &getNext() const { return *next; }
+    std::unique_ptr<Next> getNext() { return std::move(next); }
     void setNext(std::unique_ptr<Next> next);
     CFG &getCFG() { return *cfg; }
 
@@ -69,6 +69,24 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
 };
 
+class ConditionalJump : public Next {
+public:
+    ConditionalJump(std::string condition, BasicBlock *thenBlock,
+                    BasicBlock *elseBlock)
+        : condition(std::move(condition)), thenBlock(thenBlock),
+          elseBlock(elseBlock) {}
+
+    virtual void accept(IRBaseVisitor &visitor) override;
+    const std::string &getCondition() const { return condition; }
+    BasicBlock *getThen() { return thenBlock; }
+    BasicBlock *getElse() { return elseBlock; }
+
+protected:
+    std::string condition;
+    BasicBlock *thenBlock;
+    BasicBlock *elseBlock;
+};
+
 class CFG {
 public:
     CFG(std::string name) : name(std::move(name)) {}
@@ -82,11 +100,15 @@ public:
     const std::vector<std::unique_ptr<BasicBlock>> &getBlocks() const {
         return blocks;
     }
+    uint32_t getSize();
+    void addArg(const std::string &name, VarType type) { args.push_back(std::make_pair(name, type)); }
+    const std::vector<std::pair<std::string, VarType>> &getArgs() const { return args; }
     // Scope *mcainScope;
 
 protected:
     std::vector<std::unique_ptr<BasicBlock>> blocks;
     std::vector<std::unique_ptr<Scope>> scopes;
+    std::vector<std::pair<std::string, VarType>> args;
     BasicBlock *epilogue;
     std::string name;
 };
@@ -155,6 +177,22 @@ protected:
     std::string to;
     std::string left;
     std::string right;
+};
+
+class Call : public IRInstr {
+public:
+    Call(const std::string &func_name, const std::string &ret)
+        : func_name(func_name), ret(ret) {}
+    virtual void accept(IRBaseVisitor &visitor) override;
+    void addName(const std::string &name) { names.push_back(name); }
+    const std::string &getFunc_name() const { return func_name; }
+    const std::vector<std::string> &getNames() const { return names; }
+    const std::string &getRet() { return ret; }
+
+protected:
+    std::string ret;
+    std::string func_name;
+    std::vector<std::string> names;
 };
 
 } // namespace ir

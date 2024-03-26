@@ -102,6 +102,12 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
         std::cout << "    inc DWORD PTR -" << from.second
                   << "[rbp]\n"; // On incremente a
         break;
+    case ir::UnaryOp::NOT: // !a
+        std::cout << "    cmp DWORD PTR -" << from.second << "[rbp], 0\n";
+        std::cout << "    setz al\n";
+        std::cout << "    movzx eax, al\n";
+        std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
+        break;
     }
 }
 
@@ -111,15 +117,30 @@ void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
         instruction->accept(*this);
     }
     // Call end block here :
-    bb.getNext().accept(*this);
+    auto next = bb.getNext();
+    next->accept(*this);
+    bb.setNext(std::move(next));
 }
 
 void IRx86Visitor::visitCFG(ir::CFG &cfg) {
+
+    std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
     // prelude
     std::cout << ".globl " << cfg.getName() << "\n";
     std::cout << cfg.getName() << ":\n";
     std::cout << "    push rbp\n";
     std::cout << "    mov rbp, rsp\n";
+    std::cout << "    sub rsp, " << cfg.getSize() << '\n';
+
+    for (size_t i = 0; i < cfg.getArgs().size() && i < regs.size(); ++i) {
+        std::cout << "    mov DWORD PTR -"
+                  << cfg.getBlocks()[0]
+                         ->getScope()
+                         .getVariable(cfg.getArgs()[i].first)
+                         .value()
+                         .second
+                  << "[rbp], " << regs[i] << '\n';
+    }
 
     // blocks
     for (auto &block : cfg.getBlocks()) {
@@ -133,12 +154,57 @@ void IRx86Visitor::visitUnconditionalJump(ir::UnconditionalJump &jump) {
     std::cout << "    jmp " << jump.getTo().getName() << "\n";
 }
 
+void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
+    Variable cond =
+        jump.getBlock().getScope().getVariable(jump.getCondition()).value();
+    std::cout << "    cmp DWORD PTR -" << cond.second << "[rbp], 0\n";
+    std::cout << "    je " << jump.getElse()->getName() << "\n";
+    std::cout << "    jmp " << jump.getThen()->getName() << "\n";
+}
+
 void IRx86Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
 
     std::cout << "    mov eax, DWORD PTR -" << retVar.second << "[rbp]\n";
+    std::cout << "    mov rsp, rbp\n";
     std::cout << "    pop rbp\n";
     std::cout << "    ret\n";
+}
+
+void IRx86Visitor::visitCall(ir::Call &call) {
+    std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+
+    if (call.getNames().size() > regs.size() &&
+        ((call.getNames().size() * 4) % 16) != 0) {
+        std::cout << "    sub rsp, 8\n";
+    }
+
+    size_t i;
+    for (i = 0; i < call.getNames().size() && i < regs.size(); ++i) {
+        std::cout << "    mov " << regs[i] << ", DWORD PTR -"
+                  << call.getBlock()
+                         .getScope()
+                         .getVariable(call.getNames()[i])
+                         .value()
+                         .second
+                  << "[rbp]\n";
+    }
+
+    for (; i >= regs.size() && i < call.getNames().size(); ++i) {
+        std::cout << "    push DWORD PTR -"
+                  << call.getBlock()
+                         .getScope()
+                         .getVariable(call.getNames()[i])
+                         .value()
+                         .second
+                  << "[rbp]\n";
+    }
+
+    std::cout << "    call " << call.getFunc_name() << '\n';
+    std::cout
+        << "    mov DWORD PTR -"
+        << call.getBlock().getScope().getVariable(call.getRet()).value().second
+        << "[rbp], eax\n";
 }
 
 inline void IRx86Visitor::writeOrCond(uint32_t left, uint32_t right,
