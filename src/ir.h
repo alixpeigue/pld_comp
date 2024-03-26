@@ -43,7 +43,7 @@ public:
      */
     BasicBlock &getBlock() { return *block; }
     void setBlock(BasicBlock *bb) { block = bb; }
-    virtual const std::string toString() { return ""; }
+    virtual const std::string toString() const { return "IRInstr"; }
     virtual ~IRInstr() {}
 
 protected:
@@ -301,7 +301,7 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getTo() const { return to; }
     const std::string &getFrom() const { return from; }
-    virtual const std::string toString() override {
+    virtual const std::string toString() const override {
         return "Affect: " + getTo() + '=' + getFrom();
     }
 
@@ -325,7 +325,7 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getTo() const { return to; }
     int getValue() const { return value; }
-    virtual const std::string toString() override {
+    virtual const std::string toString() const override {
         return "AffectConst: " + getTo() + '=' + std::to_string(getValue());
     }
 
