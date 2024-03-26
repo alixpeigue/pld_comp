@@ -404,14 +404,47 @@ antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
     return ctx->VARIABLE()->getText();
 }
 
-antlrcpp::Any IRGenVisitor::visitAffect(ifccParser::AffectContext *ctx) {
-    // Extract the source and destination variables from the context.
-    std::string to = ctx->VARIABLE()->getText();
-    std::string from = (std::string)this->visit(ctx->expression());
-    // Create an instruction to affect the destination variable with the source.
-    auto instruction = std::make_unique<ir::Affect>(to, from);
-    this->currentBlock->addInstr(std::move(instruction));
-    return from;
+antlrcpp::Any IRGenVisitor::visitAffect(
+    ifccParser::AffectContext *ctx) {                               // a op b
+    std::string to = ctx->VARIABLE()->getText();                    // a
+    std::string from = (std::string)this->visit(ctx->expression()); // b
+
+    std::unique_ptr<ir::IRInstr> instructionAffect;
+    if (ctx->op->getText() == "=") { // a = b
+        instructionAffect = std::make_unique<ir::Affect>(to, from);
+    } else {
+        // creer le temp
+        ++counterTempVariables;
+        std::string tmpTo = "#" + std::to_string(counterTempVariables);
+        this->currentBlock->getScope().addVariable(tmpTo, INT);
+
+        // declare l'instruction operation
+        ir::BinOp::BinOpType operateur;
+        if (ctx->op->getText() == "+=") {
+            operateur = ir::BinOp::ADD;
+        } else if (ctx->op->getText() == "-=") {
+            operateur = ir::BinOp::SUB;
+        } else if (ctx->op->getText() == "*=") {
+            operateur = ir::BinOp::MUL;
+        } else if (ctx->op->getText() == "/=") {
+            operateur = ir::BinOp::DIV;
+        } else if (ctx->op->getText() == "&=") {
+            operateur = ir::BinOp::AND_BIN;
+        } else if (ctx->op->getText() == "^=") {
+            operateur = ir::BinOp::XOR_BIN;
+        } else if (ctx->op->getText() == "|=") {
+            operateur = ir::BinOp::OR_BIN;
+        }
+        std::unique_ptr<ir::IRInstr> instructionOperation =
+            std::make_unique<ir::BinOp>(operateur, tmpTo, to, from);
+        instructionAffect = std::make_unique<ir::Affect>(to, tmpTo);
+
+        // ajoute l'instruction operation
+        this->currentBlock->addInstr(std::move(instructionOperation));
+    }
+
+    this->currentBlock->addInstr(std::move(instructionAffect));
+    return to;
 }
 
 antlrcpp::Any IRGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
@@ -485,6 +518,175 @@ antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     } else {
         instruction = std::make_unique<ir::UnaryOp>(ir::UnaryOp::NOT, to, from);
     }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "<<") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::SHIFT_L, to, left, right);
+    } else {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::SHIFT_R, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitCompare(ifccParser::CompareContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "<") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::LT, to, left, right);
+    } else if (ctx->op->getText() == ">") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::GT, to, left, right);
+    } else if (ctx->op->getText() == ">=") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::GTE, to, left, right);
+    } else if (ctx->op->getText() == "<=") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::LTE, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    if (ctx->op->getText() == "==") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::EQ, to, left, right);
+    } else if (ctx->op->getText() == "!=") {
+        instruction =
+            std::make_unique<ir::BinOp>(ir::BinOp::NEQ, to, left, right);
+    }
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::XOR_BIN, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::OR_BIN, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction =
+        std::make_unique<ir::BinOp>(ir::BinOp::AND_BIN, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction = std::make_unique<ir::BinOp>(ir::BinOp::AND, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
+    std::string left = visit(ctx->expression(0));
+    std::string right = visit(ctx->expression(1));
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+
+    std::unique_ptr<ir::IRInstr> instruction;
+    instruction = std::make_unique<ir::BinOp>(ir::BinOp::OR, to, left, right);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_INC, from, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return from;
+}
+
+antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_DEC, from, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return from;
+}
+
+antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_INC, to, from);
+    this->currentBlock->addInstr(std::move(instruction));
+    return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
+    std::string from = ctx->VARIABLE()->getText();
+    ++counterTempVariables;
+    std::string to = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(to, INT);
+    auto instruction =
+        std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_DEC, to, from);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
 }

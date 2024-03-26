@@ -10,9 +10,6 @@
 #include "ifccLexer.h"
 #include "ifccParser.h"
 
-#include "CodeGenVisitor.h"
-#include "SymbolsTableVisitor.h"
-
 #include "IRBaseVisitor.h"
 #include "Scope.h"
 #include "ir.h"
@@ -53,17 +50,14 @@ int main(int argn, const char **argv) {
         exit(1);
     }
 
-    // SymbolsTableVisitor symbolsTable;
-    // symbolsTable.visit(tree);
-    // CodeGenVisitor v(symbolsTable.getMap());
-    // v.visit(tree);
-    vector<std::unique_ptr<ir::CFG>> ir;
+    vector<std::unique_ptr<ir::CFG>>
+        ir; // liste de graphe (un graphe = une fonction)
     IRGenVisitor v1(ir);
-    v1.visit(tree);
+    v1.visit(tree); // creer l'IR
 
     std::cout << ".intel_syntax noprefix\n";
     IRx86Visitor v2;
-    for (const auto & i : ir) {
+    for (const auto &i : ir) {
         i->visitBlocks(v2);
     }
     return 0;

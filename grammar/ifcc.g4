@@ -33,10 +33,22 @@ expression: INT_CONST # intConst |
             CHAR_CONST #charConst | 
             VARIABLE # variable |
             '(' expression ')' #paren |
+            '++' VARIABLE #preInc |
+            '--' VARIABLE #preDec |
             op = ('-' | '+' | '!') expression # unaryAdd |
             expression op = ('*' | '/' | '%') expression # mult |
             expression op = ('+' | '-') expression # add |
-            VARIABLE '=' expression  # affect |
+            expression op = ('<<' | '>>') expression #shift |
+            expression op = ('<' | '>' | '<=' | '>=') expression #compare |
+            expression op = ('==' | '!=') expression #compareEq |
+            expression '&' expression # andBin |
+            expression '^' expression # xorBin |
+            expression '|' expression # orBin |
+            expression '&&' expression #and |
+            expression '||' expression #or |
+            VARIABLE op = ('=' | '+=' | '-=' | '*=' | '/=' | '&=' | '^=' | '|=') expression  # affect |
+            VARIABLE '++' #postInc |
+            VARIABLE '--' #postDec |
             VARIABLE '(' expression? (',' expression)* ')' # func_call ;
 
 IF : 'if' ;

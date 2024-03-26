@@ -13,6 +13,19 @@
 # - in the TEST step, we actually run GCC and IFCC on each test-case
 #
 #
+def printProgressBar(act, total, nbOk):
+    nbFail = act - nbOk
+    nbCase = int(30)
+    taux = act/total
+    nbARemplir = int(taux * nbCase)
+    barStr = "Progress : ["
+    for i in range(nbCase):
+        if i < nbARemplir:
+            barStr = barStr + '#' # '█'
+        else:
+            barStr = barStr + '-'
+    barStr = barStr + f"] {taux*100:3.0f}%  OK : {nbOk:2}  Failed : {nbFail:2}"
+    print(barStr, "\033[0K\r", end = "\r")
 
 import argparse
 import glob
@@ -102,7 +115,7 @@ if len(inputfilenames) == 0:
     print("error: found no test-case in: "+" ".join(args.input))
     sys.exit(1)
 
-## Here we check that  we can actually read the files.  Our goal is to
+## Here we check that we can actually read the files. Our goal is to
 ## fail as early as possible when the CLI arguments are wrong.
 for inputfilename in inputfilenames:
     try:
@@ -141,7 +154,9 @@ for inputfilename in inputfilenames:
     
     ## each test-case gets copied and processed in its own subdirectory:
     ## ../somedir/subdir/file.c becomes ./ifcc-test-output/somedir-subdir-file/input.c
-    subdir='ifcc-test-output/'+inputfilename.strip("./")[:-2].replace('/','-')
+    lastDir = inputfilename.split('/')
+    lastDir = lastDir[-2] + '--' + lastDir[-1]
+    subdir='ifcc-test-output/'+lastDir.strip("./")[:-2].replace('/','-')
     os.mkdir(subdir)
     shutil.copyfile(inputfilename, subdir+'/input.c')
     jobs.append(subdir)
@@ -163,14 +178,18 @@ if args.debug:
 ######################################################################################
 ## TEST step: actually compile all test-cases with both compilers
 
+nbOk = 0
+nbTest = 0
+errorText = "\n\n"
 for jobname in jobs:
+    printProgressBar(nbTest, len(jobs), nbOk)
+    nbTest = nbTest + 1
     os.chdir(orig_cwd)
-
-    print('TEST-CASE: '+jobname)
     os.chdir(jobname)
+    jobname = jobname[17:]
     
     ## Reference compiler = GCC
-    gccstatus=command("gcc -S -o asm-gcc.s input.c", "gcc-compile.txt")
+    gccstatus=command("gcc -S -masm=intel -o asm-gcc.s input.c", "gcc-compile.txt")
     if gccstatus == 0:
         # test-case is a valid program. we should run it
         gccstatus=command("gcc -o exe-gcc asm-gcc.s", "gcc-link.txt")
@@ -184,15 +203,17 @@ for jobname in jobs:
     
     if gccstatus != 0 and ifccstatus != 0:
         ## ifcc correctly rejects invalid program -> test-case ok
-        print("TEST OK")
+        #print('TEST-CASE: '+jobname)
+        #print("TEST OK")
+        nbOk = nbOk + 1
         continue
     elif gccstatus != 0 and ifccstatus == 0:
         ## ifcc wrongly accepts invalid program -> error
-        print("TEST FAIL (your compiler accepts an invalid program)")
+        errorText = errorText + '[' + jobname + "] : your compiler accepts an invalid program\n"
         continue
     elif gccstatus == 0 and ifccstatus != 0:
         ## ifcc wrongly rejects valid program -> error
-        print("TEST FAIL (your compiler rejects a valid program)")
+        errorText = errorText + '[' + jobname  + "] : your compiler rejects a valid program\n"
         if args.verbose:
             dumpfile("ifcc-compile.txt")
         continue
@@ -200,7 +221,7 @@ for jobname in jobs:
         ## ifcc accepts to compile valid program -> let's link it
         ldstatus=command("gcc -o exe-ifcc asm-ifcc.s", "ifcc-link.txt")
         if ldstatus:
-            print("TEST FAIL (your compiler produces incorrect assembly)")
+            errorText = errorText + '[' + jobname + "] : your compiler produces incorrect assembly\n"
             if args.verbose:
                 dumpfile("ifcc-link.txt")
             continue
@@ -210,7 +231,7 @@ for jobname in jobs:
         
     command("./exe-ifcc","ifcc-execute.txt")
     if open("gcc-execute.txt").read() != open("ifcc-execute.txt").read() :
-        print("TEST FAIL (different results at execution)")
+        errorText = errorText + '[' + jobname + "] : different results at execution\n"
         if args.verbose:
             print("GCC:")
             dumpfile("gcc-execute.txt")
@@ -219,4 +240,12 @@ for jobname in jobs:
         continue
 
     ## last but not least
-    print("TEST OK")
+    #print('TEST-CASE: '+jobname)
+    #print("TEST OK")
+    nbOk = nbOk + 1
+
+printProgressBar(nbTest, len(jobs), nbOk)
+if (nbTest != nbOk):
+    print(errorText)
+else:
+    print("\n")
