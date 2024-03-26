@@ -72,30 +72,17 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // Extract the condition expression for the if statement.
     std::string condition = this->visit(ctx->expression());
 
-    // Create new blocks for the then and else branches, and set up jumps.
-    Scope &currentScope = this->currentBlock->getScope();
-
-    // Generate a name for the basic block representing the 'then' branch.
-    std::string name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto thenBlock = new ir::BasicBlock(&currentScope, name);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
-
-    name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto elseBlock = new ir::BasicBlock(&currentScope, name);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
+    // Generate a name for the basic block representing the 'then' branch
+    ir::BasicBlock* thenBlock = createBlock(".BB");
+    ir::BasicBlock* elseBlock = createBlock(".BB");
 
     ir::BasicBlock *end = elseBlock;
     std::unique_ptr<ir::Next> endNext = std::move(currentBlock->getNext());
 
     // Check if there is an 'else' statement.
     if (ctx->else_stmt) {
-        // If so, create a new block for the end of the if statement.
-        name = ".BB" + std::to_string(this->counterBlocks);
-        ++counterBlocks;
-        end = new ir::BasicBlock(&currentScope, name);
-        currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(end));
+        // If so, create a new block for the end of the if statement
+        end = createBlock(".BB");
         elseBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
     }
 
@@ -140,28 +127,15 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     ifccParser::While_stmtContext *ctx) {
 
-    // Retrieve the current scope.
-    Scope &currentScope = this->currentBlock->getScope();
-
     // Create a new basic block for the loop condition.
-    std::string name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto conditionBlock = new ir::BasicBlock(&currentScope, name);
-    this->currentFunction->addBlock(
-        std::unique_ptr<ir::BasicBlock>(conditionBlock));
+    ir::BasicBlock* conditionBlock = createBlock(".BB");
 
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
-    name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto thenBlock = new ir::BasicBlock(&currentScope, name);
+    ir::BasicBlock* thenBlock = createBlock(".BB");
     thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(conditionBlock));
-    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
 
-    name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto elseBlock = new ir::BasicBlock(&currentScope, name);
+    ir::BasicBlock* elseBlock = createBlock(".BB");
     elseBlock->setNext(this->currentBlock->getNext());
-    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
 
     this->currentBlock->setNext(
         std::make_unique<ir::UnconditionalJump>(conditionBlock));
@@ -198,28 +172,12 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
 antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     ifccParser::Do_while_stmtContext *ctx) {
 
-    // Retrieve the current scope.
-    Scope &currentScope = this->currentBlock->getScope();
-
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
-    std::string name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto thenBlock = new ir::BasicBlock(&currentScope, name);
-    // Add the current block to the list of blocks in the current function.
-    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(thenBlock));
-
-    name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto elseBlock = new ir::BasicBlock(&currentScope, name);
+    ir::BasicBlock* thenBlock = createBlock(".BB");
+    ir::BasicBlock* elseBlock = createBlock(".BB");
     elseBlock->setNext(this->currentBlock->getNext());
-    this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(elseBlock));
 
-    name = ".BB" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto conditionBlock = new ir::BasicBlock(&currentScope, name);
-    this->currentFunction->addBlock(
-        std::unique_ptr<ir::BasicBlock>(conditionBlock));
-
+    ir::BasicBlock* conditionBlock = createBlock(".BB");
     thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(elseBlock));
 
     // Set up an unconditional jump from the current block to the 'then' block.
@@ -650,31 +608,19 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     Scope &currentScope = this->currentBlock->getScope();
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie est vrai
-    std::string nameLazyBlock = ".AND" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto lazyBlock = new ir::BasicBlock(&currentScope, nameLazyBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(lazyBlock));
+    ir::BasicBlock* lazyBlock = createBlock(".AND");
 
-    //On créé le bloc auquel on accede si les 2 termes sont vrais. Alors on met tmp a 1
-    std::string nameTrueBlock = ".AND" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto trueBlock = new ir::BasicBlock(&currentScope, nameTrueBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(trueBlock));
+    //On créé le bloc True auquel on accede si c'est vrai. Alors on met tmp a 1
+    ir::BasicBlock* trueBlock = createBlock(".AND");
 
     //On créé le bloc auquel on accede si c'est faux. Alors on met tmp a 0
-    std::string nameFalseBlock = ".AND" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto falseBlock = new ir::BasicBlock(&currentScope, nameFalseBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(falseBlock));
+    ir::BasicBlock* falseBlock = createBlock(".AND");
 
     //On créé le bloc de suite
-    std::string nameFollowBlock = ".AND" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto followBlock = new ir::BasicBlock(&currentScope, nameFollowBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(followBlock));
+    ir::BasicBlock* followBlock = createBlock(".AND");
 
 
-    //On jump vers le then ou le follow en fonction de tmp
+    //On jump vers le lazy ou le false en fonction de b1
     auto conditional1 = std::make_unique<ir::ConditionalJump>(
         left, lazyBlock, falseBlock);
     this->currentBlock->setNext(std::move(conditional1));
@@ -729,28 +675,16 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     Scope &currentScope = this->currentBlock->getScope();
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie est fausse
-    std::string nameLazyBlock = ".OR" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    ir::BasicBlock* lazyBlock = new ir::BasicBlock(&currentScope, nameLazyBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(lazyBlock));
+    ir::BasicBlock* lazyBlock = createBlock(".OR");
 
     //On créé le bloc True auquel on accede si c'est vrai. Alors on met tmp a 1
-    std::string nameTrueBlock = ".OR" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto trueBlock = new ir::BasicBlock(&currentScope, nameTrueBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(trueBlock));
+    ir::BasicBlock* trueBlock = createBlock(".OR");
 
     //On créé le bloc auquel on accede si c'est faux. Alors on met tmp a 0
-    std::string nameFalseBlock = ".OR" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto falseBlock = new ir::BasicBlock(&currentScope, nameFalseBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(falseBlock));
+    ir::BasicBlock* falseBlock = createBlock(".OR");
 
     //On créé le bloc de suite
-    std::string nameFollowBlock = ".OR" + std::to_string(this->counterBlocks);
-    ++counterBlocks;
-    auto followBlock = new ir::BasicBlock(&currentScope, nameFollowBlock);
-    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(followBlock));
+    ir::BasicBlock* followBlock = createBlock(".OR");
 
     //On jump vers le true ou le lazy en fonction de tmp
     auto conditional1 = std::make_unique<ir::ConditionalJump>(
@@ -818,4 +752,14 @@ antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_DEC, to, from);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
+}
+
+/* Creer le block et l'ajoute au CFG actuel */
+ir::BasicBlock *IRGenVisitor::createBlock(const std::string &name) {
+    std::string n = name + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    Scope &currentScope = this->currentBlock->getScope();
+    ir::BasicBlock* newBlock = new ir::BasicBlock(&currentScope, n);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(newBlock));
+    return newBlock;
 }

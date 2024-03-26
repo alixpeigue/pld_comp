@@ -97,4 +97,6 @@ private:
     ir::BasicBlock *currentBlock;
     int counterTempVariables = 0;
     int counterBlocks = 0;
+
+    ir::BasicBlock* createBlock(const std::string& name);
 };
