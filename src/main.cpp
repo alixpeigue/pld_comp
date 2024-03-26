@@ -87,7 +87,6 @@ int main(int argn, char **argv) {
         i->visitBlocks(cstpropv);
     }
 
-    std::cout << ".intel_syntax noprefix\n";
     IRx86Visitor v2;
     for (const auto &i : ir) {
         i->visitBlocks(*codeGenVisitor);
