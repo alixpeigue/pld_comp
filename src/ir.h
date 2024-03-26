@@ -41,9 +41,10 @@ public:
      *
      * @return BasicBlock&
      */
-    BasicBlock &getBlock() { return *block; };
+    BasicBlock &getBlock() { return *block; }
     void setBlock(BasicBlock *bb) { block = bb; }
     virtual const std::string toString() { return ""; }
+    virtual ~IRInstr() {}
 
 protected:
     BasicBlock *block;
@@ -298,8 +299,8 @@ public:
     Affect(std::string to, std::string from)
         : to(std::move(to)), from(std::move(from)){};
     virtual void accept(IRBaseVisitor &visitor) override;
-    const std::string &getTo() const { return to; };
-    const std::string &getFrom() const { return from; };
+    const std::string &getTo() const { return to; }
+    const std::string &getFrom() const { return from; }
     virtual const std::string toString() override {
         return "Affect: " + getTo() + '=' + getFrom();
     }
@@ -322,8 +323,8 @@ public:
     AffectConst(std::string left, int value)
         : to(std::move(left)), value(value){};
     virtual void accept(IRBaseVisitor &visitor) override;
-    const std::string &getTo() const { return to; };
-    int getValue() const { return value; };
+    const std::string &getTo() const { return to; }
+    int getValue() const { return value; }
     virtual const std::string toString() override {
         return "AffectConst: " + getTo() + '=' + std::to_string(getValue());
     }
@@ -349,7 +350,7 @@ public:
         : type(type), to(to), from(from) {}
 
     const std::string &getTo() const { return to; }
-    const std::string &getFrom() const { return from; };
+    const std::string &getFrom() const { return from; }
     UnaryOpType getType() const { return type; }
     virtual void accept(IRBaseVisitor &visitor) override;
 
