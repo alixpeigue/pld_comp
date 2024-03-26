@@ -320,7 +320,7 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
 
     VarType type;
 
-    if (ctx->type()->getText() == "int") {
+    if (ctx->type(0)->getText() == "int") {
         type = VarType::INT;
     } else {
         type = VarType::VOID;

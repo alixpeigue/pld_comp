@@ -5,6 +5,7 @@
 
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
+#include "TypeCheckingVisitor.h"
 #include "antlr4-runtime.h"
 #include "ifccBaseVisitor.h"
 #include "ifccLexer.h"
@@ -50,8 +51,10 @@ int main(int argn, const char **argv) {
         exit(1);
     }
 
-    vector<std::unique_ptr<ir::CFG>>
-        ir; // liste de graphe (un graphe = une fonction)
+    // liste de graphe (un graphe = une fonction)
+    vector<std::unique_ptr<ir::CFG>> ir;
+    TypeCheckingVisitor v0;
+    v0.visit(tree);
     IRGenVisitor v1(ir);
     v1.visit(tree); // creer l'IR
 

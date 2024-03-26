@@ -6,11 +6,22 @@
 #include <string>
 #include <unordered_map>
 
-enum class VarType { VOID, INT };
+class VarType {
 
-static uint32_t typeSize[] = {0, 4};
+public:
+    enum Type { VOID, INT };
 
-uint32_t typePriority[] = {0, 1};
+    VarType() = default;
+    VarType(Type type) : type(type){};
+    VarType(const std::string &name);
+    operator Type() const { return type; }
+
+    int getSize() const { return sizes[type]; }
+
+protected:
+    Type type;
+    static constexpr int sizes[] = {0, 4};
+};
 
 using Variable = std::pair<VarType, uint32_t>;
 
