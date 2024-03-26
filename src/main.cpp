@@ -5,6 +5,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "ConstantPropagationVisitor.h"
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
 #include "RV64Visitor.h"
@@ -81,7 +82,13 @@ int main(int argn, char **argv) {
     IRGenVisitor v1(ir);
     v1.visit(tree); // creer l'IR
 
-    // std::cout << ".intel_syntax noprefix\n";
+    ConstantPropagationVisitor cstpropv;
+    for (const auto &i : ir) {
+        i->visitBlocks(cstpropv);
+    }
+
+    std::cout << ".intel_syntax noprefix\n";
+    IRx86Visitor v2;
     for (const auto &i : ir) {
         i->visitBlocks(*codeGenVisitor);
     }

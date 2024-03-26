@@ -42,6 +42,8 @@ public:
      * @return BasicBlock&
      */
     BasicBlock &getBlock() { return *block; };
+    void setBlock(BasicBlock *bb) { block = bb; }
+    virtual const std::string toString() { return ""; }
 
 protected:
     BasicBlock *block;
@@ -87,9 +89,7 @@ public:
      *
      * @return const std::vector<std::unique_ptr<IRInstr>>&
      */
-    const std::vector<std::unique_ptr<IRInstr>> &getInstructions() const {
-        return instrs;
-    }
+    std::vector<std::unique_ptr<IRInstr>> &getInstructions() { return instrs; }
 
     /**
      * @brief Renvoie l'objet représentant la suite du bloc
@@ -300,6 +300,9 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getTo() const { return to; };
     const std::string &getFrom() const { return from; };
+    virtual const std::string toString() override {
+        return "Affect: " + getTo() + '=' + getFrom();
+    }
 
 protected:
     std::string to;
@@ -321,6 +324,9 @@ public:
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getTo() const { return to; };
     int getValue() const { return value; };
+    virtual const std::string toString() override {
+        return "AffectConst: " + getTo() + '=' + std::to_string(getValue());
+    }
 
 protected:
     std::string to;
