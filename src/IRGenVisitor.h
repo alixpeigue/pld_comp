@@ -27,6 +27,8 @@ public:
     virtual antlrcpp::Any visitDo_while_stmt(
         ifccParser::Do_while_stmtContext *ctx) override;
 
+    virtual antlrcpp::Any visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) override;
+
     virtual antlrcpp::Any visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) override;
 
     virtual antlrcpp::Any visitBreak_stmt(ifccParser::Break_stmtContext *ctx) override;

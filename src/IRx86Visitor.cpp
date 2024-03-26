@@ -159,6 +159,17 @@ void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
     std::cout << "    jmp " << jump.getThen()->getName() << "\n";
 }
 
+void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
+    Variable expr = jump.getBlock().getScope().getVariable(jump.getExpressionTest()).value();
+    auto caseTests = jump.getCaseTests();
+
+    for (size_t i = 0; i < caseTests.size(); ++i) {
+        auto caseTest = caseTests[i];
+        std::cout << "    cmp DWORD PTR -" << expr.second << "[rbp], " << caseTest.first << "\n";
+        std::cout << "    je " << caseTest.second->getName() << "\n";
+    }
+}
+
 void IRx86Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
 

@@ -4,7 +4,7 @@ axiom : prog EOF ;
 
 prog : function* ;
 
-statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop | break_stmt | continue_stmt ;
+statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop | break_stmt | continue_stmt | switch_stmt ;
 
 function : 'int' VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
 
@@ -17,6 +17,12 @@ loop : do_while_stmt | while_stmt ;
 do_while_stmt : DO then_stmt = statement WHILE '(' expression ')' ';' ;
 
 while_stmt : WHILE '(' expression ')' then_stmt = statement ;
+
+switch_stmt : SWITCH '(' expression ')' '{' case_stmt* default_case_stmt? '}' ;
+
+case_stmt : CASE test_expr = (INT_CONST | CHAR_CONST) ':' statement* ;
+
+default_case_stmt : DEFAULT ':' statement* ;
 
 break_stmt : BREAK ';' ;
 
@@ -54,7 +60,10 @@ expression: INT_CONST # intConst |
 IF : 'if' ;
 ELSE : 'else' ;
 DO : 'do' ;
-WHILE : 'while';
+WHILE : 'while' ;
+SWITCH : 'switch' ;
+CASE : 'case' ;
+DEFAULT : 'default' ;
 RETURN : 'return' ;
 BREAK : 'break' ;
 CONTINUE : 'continue' ;
