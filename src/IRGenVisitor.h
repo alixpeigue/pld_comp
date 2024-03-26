@@ -10,7 +10,31 @@ class IRGenVisitor : public ifccBaseVisitor {
 public:
     IRGenVisitor(std::vector<std::unique_ptr<ir::CFG>> &ir) : ir(ir){};
 
+
+    virtual antlrcpp::Any visitAxiom(ifccParser::AxiomContext *ctx) override;
+
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
+
+    virtual antlrcpp::Any visitScope(ifccParser::ScopeContext *ctx) override;
+
+    virtual antlrcpp::Any visitIf_stmt(
+        ifccParser::If_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitWhile_stmt(
+        ifccParser::While_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitDo_while_stmt(
+        ifccParser::Do_while_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitBreak_stmt(ifccParser::Break_stmtContext *ctx) override;
+
+    virtual antlrcpp::Any visitFunc_call(
+        ifccParser::Func_callContext *ctx) override;
+
+    virtual antlrcpp::Any visitFunction(
+        ifccParser::FunctionContext *ctx) override;
 
     virtual antlrcpp::Any visitReturn_stmt(
         ifccParser::Return_stmtContext *ctx) override;
@@ -41,6 +65,7 @@ public:
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
     std::unique_ptr<ir::CFG> currentFunction;
-    std::unique_ptr<ir::BasicBlock> currentBlock;
+    ir::BasicBlock *currentBlock;
     int counterTempVariables = 0;
+    int counterBlocks = 0;
 };

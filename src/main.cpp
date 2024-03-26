@@ -63,6 +63,8 @@ int main(int argn, const char **argv) {
 
     std::cout << ".intel_syntax noprefix\n";
     IRx86Visitor v2;
-    ir[0]->visitBlocks(v2);
+    for (const auto & i : ir) {
+        i->visitBlocks(v2);
+    }
     return 0;
 }
