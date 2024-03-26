@@ -186,7 +186,7 @@ for jobname in jobs:
     nbTest = nbTest + 1
     os.chdir(orig_cwd)
     os.chdir(jobname)
-    jobname = jobname[33:]
+    jobname = jobname[17:]
     
     ## Reference compiler = GCC
     gccstatus=command("gcc -S -masm=intel -o asm-gcc.s input.c", "gcc-compile.txt")
