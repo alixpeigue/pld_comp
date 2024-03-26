@@ -628,29 +628,158 @@ antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
 }
 
 antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
+/*
+    b1 && b2
+    if b1 {lazyBlock
+        if b2 {trueBlock
+            tmp = 1;
+        }
+    }
+    {falseBlock
+        tmp = 0;
+    }
+    {followBlock
+*/
     std::string left = visit(ctx->expression(0));
-    std::string right = visit(ctx->expression(1));
-    ++counterTempVariables;
-    std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
 
-    std::unique_ptr<ir::IRInstr> instruction;
-    instruction = std::make_unique<ir::BinOp>(ir::BinOp::AND, to, left, right);
-    this->currentBlock->addInstr(std::move(instruction));
-    return to;
+    //on ajoute la variable de retour a l'index
+    ++counterTempVariables;
+    std::string tmp = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(tmp, INT);
+
+    Scope &currentScope = this->currentBlock->getScope();
+
+    // On créé le lazy block auquel on accede uniquement si la premiere partie est vrai
+    std::string nameLazyBlock = ".AND" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto lazyBlock = new ir::BasicBlock(&currentScope, nameLazyBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(lazyBlock));
+
+    //On créé le bloc auquel on accede si les 2 termes sont vrais. Alors on met tmp a 1
+    std::string nameTrueBlock = ".AND" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto trueBlock = new ir::BasicBlock(&currentScope, nameTrueBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(trueBlock));
+
+    //On créé le bloc auquel on accede si c'est faux. Alors on met tmp a 0
+    std::string nameFalseBlock = ".AND" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto falseBlock = new ir::BasicBlock(&currentScope, nameFalseBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(falseBlock));
+
+    //On créé le bloc de suite
+    std::string nameFollowBlock = ".AND" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto followBlock = new ir::BasicBlock(&currentScope, nameFollowBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(followBlock));
+
+
+    //On jump vers le then ou le follow en fonction de tmp
+    auto conditional1 = std::make_unique<ir::ConditionalJump>(
+        left, lazyBlock, falseBlock);
+    this->currentBlock->setNext(std::move(conditional1));
+
+    //on se deplace dans le block lazy alors on peut evaluer l'expression de droite
+    this->currentBlock = std::move(lazyBlock);
+    std::string right = visit(ctx->expression(1));
+    auto conditional2 = std::make_unique<ir::ConditionalJump>(
+        right, trueBlock, falseBlock);
+    this->currentBlock->setNext(std::move(conditional2));
+
+    //On se place dans le true block
+    this->currentBlock = std::move(trueBlock);
+    auto instructionTrue = std::make_unique<ir::AffectConst>(tmp, 1);;
+    this->currentBlock->addInstr(std::move(instructionTrue));
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(followBlock));
+
+    //On se place dans le false block
+    this->currentBlock = std::move(falseBlock);
+    auto instructionFalse = std::make_unique<ir::AffectConst>(tmp, 0);
+    this->currentBlock->addInstr(std::move(instructionFalse));
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(followBlock));
+
+    //On se déplace dans le block de suite
+    this->currentBlock = std::move(followBlock);
+
+    return tmp;
 }
 
 antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
+/*
+    b1 || b2
+    if (b1) ---> trueBlock | -/-> lazyBlock
+    {lazyBlock
+        if (b2) ---> trueBlock | -/-> falseBlock
+    }
+    {trueBlock
+        tmp = 1
+    } ---> follow
+    {falseBlock
+        tmp = 0
+    } ---> follow
+    {follow
+*/
     std::string left = visit(ctx->expression(0));
-    std::string right = visit(ctx->expression(1));
-    ++counterTempVariables;
-    std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
 
-    std::unique_ptr<ir::IRInstr> instruction;
-    instruction = std::make_unique<ir::BinOp>(ir::BinOp::OR, to, left, right);
-    this->currentBlock->addInstr(std::move(instruction));
-    return to;
+    //on ajoute la variable de retour a l'index
+    ++counterTempVariables;
+    std::string tmp = "#" + std::to_string(counterTempVariables);
+    this->currentBlock->getScope().addVariable(tmp, INT);
+
+    Scope &currentScope = this->currentBlock->getScope();
+
+    // On créé le lazy block auquel on accede uniquement si la premiere partie est fausse
+    std::string nameLazyBlock = ".OR" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    ir::BasicBlock* lazyBlock = new ir::BasicBlock(&currentScope, nameLazyBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(lazyBlock));
+
+    //On créé le bloc True auquel on accede si c'est vrai. Alors on met tmp a 1
+    std::string nameTrueBlock = ".OR" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto trueBlock = new ir::BasicBlock(&currentScope, nameTrueBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(trueBlock));
+
+    //On créé le bloc auquel on accede si c'est faux. Alors on met tmp a 0
+    std::string nameFalseBlock = ".OR" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto falseBlock = new ir::BasicBlock(&currentScope, nameFalseBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(falseBlock));
+
+    //On créé le bloc de suite
+    std::string nameFollowBlock = ".OR" + std::to_string(this->counterBlocks);
+    ++counterBlocks;
+    auto followBlock = new ir::BasicBlock(&currentScope, nameFollowBlock);
+    currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(followBlock));
+
+    //On jump vers le true ou le lazy en fonction de tmp
+    auto conditional1 = std::make_unique<ir::ConditionalJump>(
+        left, trueBlock, lazyBlock);
+    this->currentBlock->setNext(std::move(conditional1));
+
+    //on se deplace dans le block lazy alors on peut evaluer l'expression de droite
+    this->currentBlock = std::move(lazyBlock);
+    std::string right = visit(ctx->expression(1));
+    auto conditional2 = std::make_unique<ir::ConditionalJump>(
+        right, trueBlock, falseBlock);
+    this->currentBlock->setNext(std::move(conditional2));
+
+    //On se place dans le true block
+    this->currentBlock = std::move(trueBlock);
+    auto instructionTrue = std::make_unique<ir::AffectConst>(tmp, 1);;
+    this->currentBlock->addInstr(std::move(instructionTrue));
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(followBlock));
+
+    //On se place dans le false block
+    this->currentBlock = std::move(falseBlock);
+    auto instructionFalse = std::make_unique<ir::AffectConst>(tmp, 0);
+    this->currentBlock->addInstr(std::move(instructionFalse));
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(followBlock));
+
+    //On se déplace dans le block de suite
+    this->currentBlock = std::move(followBlock);
+
+    return tmp;
 }
 
 antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
