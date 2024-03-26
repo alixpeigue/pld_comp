@@ -22,6 +22,8 @@ void ConstantPropagationVisitor::visitAffect(ir::Affect &affect) {
         ir::IRInstr *affectConst = new ir::AffectConst(affect.getTo(), value);
         affectConst->setBlock(&affect.getBlock());
         this->instr->reset(affectConst);
+    } else {
+        constants.erase(affect.getTo());
     }
 }
 
@@ -42,7 +44,10 @@ void ConstantPropagationVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
         ir::IRInstr *unaryOpConst = new ir::AffectConst(unaryOp.getTo(), value);
         unaryOpConst->setBlock(&unaryOp.getBlock());
         this->instr->reset(unaryOpConst);
+    } else {
+        constants.erase(unaryOp.getTo());
     }
+
 }
 
 void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
@@ -73,5 +78,8 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         ir::IRInstr *binOpConst = new ir::AffectConst(binOp.getTo(), value);
         binOpConst->setBlock(&binOp.getBlock());
         this->instr->reset(binOpConst);
+    } else {
+        constants.erase(binOp.getTo());
     }
+
 }
