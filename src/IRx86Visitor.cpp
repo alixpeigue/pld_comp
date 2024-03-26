@@ -180,15 +180,15 @@ void IRx86Visitor::visitCFG(ir::CFG &cfg) {
     }
 
     for (size_t i = regs.size(); i < cfg.getArgs().size(); ++i) {
-        std::cout << "    mov eax, DWORD PTR +" << (i - regs.size()) * 4 + 16
-                  << "[rbp]\n";
-        std::cout << "    mov DWORD PTR -"
-                  << cfg.getBlocks()[0]
-                         ->getScope()
-                         .getVariable(cfg.getArgs()[i].first)
-                         .value()
-                         .second
-                  << "[rbp], eax\n";
+        os << "    mov eax, DWORD PTR " << (i - regs.size()) * 4 + 16
+           << "[rbp]\n";
+        os << "    mov DWORD PTR -"
+           << cfg.getBlocks()[0]
+                  ->getScope()
+                  .getVariable(cfg.getArgs()[i].first)
+                  .value()
+                  .second
+           << "[rbp], eax\n";
     }
 
     // blocks
