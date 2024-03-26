@@ -7,7 +7,8 @@
 class ConstantPropagationVisitor : public IRBaseVisitor {
     virtual void visitAffectConst(ir::AffectConst &affect) override;
     virtual void visitAffect(ir::Affect &affect) override;
-    virtual void visitUnaryOp(ir::UnaryOp &unaryop) override;
+    virtual void visitUnaryOp(ir::UnaryOp &unaryOp) override;
+    virtual void visitBinOp(ir::BinOp &binOp) override;
     virtual void visitCFG(ir::CFG &cfg) override;
 
 protected:
