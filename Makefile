@@ -7,7 +7,7 @@ include config.mk
 GRAMMAR = grammar/ifcc.g4
 
 CC=g++
-CCFLAGS=-g -c -std=c++17 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
+CCFLAGS=-g -c -std=c++20 -I$(ANTLRINC) -Igenerated -Isrc -Wno-attributes # -Wno-defaulted-function-deleted -Wno-unknown-warning-option
 LDFLAGS=-g
 
 SRC-DIR = src

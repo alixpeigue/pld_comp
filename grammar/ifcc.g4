@@ -6,7 +6,7 @@ prog : function* ;
 
 statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop | break_stmt | continue_stmt | switch_stmt ;
 
-function : 'int' VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
+function : type VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
 
 scope : '{' statement* '}' ;
 
@@ -28,7 +28,7 @@ break_stmt : BREAK ';' ;
 
 continue_stmt : CONTINUE ';' ;
 
-declaration: 'int' declaAffect (',' declaAffect)*;
+declaration: type declaAffect (',' declaAffect)*;
 
 declaAffect: VARIABLE '=' expression | 
              VARIABLE;
@@ -56,6 +56,8 @@ expression: INT_CONST # intConst |
             VARIABLE '++' #postInc |
             VARIABLE '--' #postDec |
             VARIABLE '(' expression? (',' expression)* ')' # func_call ;
+
+type : 'int' | 'void' ;
 
 IF : 'if' ;
 ELSE : 'else' ;

@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-enum VarType { INT };
+enum class VarType { VOID, INT };
 
 static uint32_t typeSize[] = {4};
 

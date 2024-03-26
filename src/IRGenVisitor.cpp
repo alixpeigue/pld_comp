@@ -310,7 +310,7 @@ antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
         instruction->addName(name);
     }
     this->currentBlock->addInstr(std::move(instruction));
-    this->currentBlock->getScope().addVariable(tempVarName, INT);
+    this->currentBlock->getScope().addVariable(tempVarName, VarType::INT);
 
     return tempVarName;
 }
@@ -318,8 +318,16 @@ antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
 antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
     std::string funcName = ctx->VARIABLE(0)->getText();
 
+    VarType type;
+
+    if (ctx->type()->getText() == "int") {
+        type = VarType::INT;
+    } else {
+        type = VarType::VOID;
+    }
+
     // Create the function in the intermediate representation (IR).
-    this->currentFunction = std::make_unique<ir::CFG>(funcName);
+    this->currentFunction = std::make_unique<ir::CFG>(funcName, type);
 
     // Create a scope for the function.
     Scope *scope = new Scope(nullptr);
@@ -344,13 +352,14 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
 
     // Keep track of arguments and add them to the scope
     for (size_t i = 1; i < ctx->VARIABLE().size(); ++i) {
-        this->currentFunction->addArg(ctx->VARIABLE(i)->getText(), INT);
+        this->currentFunction->addArg(ctx->VARIABLE(i)->getText(),
+                                      VarType::INT);
         this->currentBlock->getScope().addVariable(ctx->VARIABLE(i)->getText(),
-                                                   INT);
+                                                   VarType::INT);
     }
 
     // Add a variable "#return" to the current block's scope.
-    this->currentBlock->getScope().addVariable("#return", INT);
+    this->currentBlock->getScope().addVariable("#return", VarType::INT);
 
     try {
         // Visit children nodes to generate IR code.
@@ -385,7 +394,8 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
 antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
     // Add a variable declaration to the current block's scope.
-    this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(), INT);
+    this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(),
+                                               VarType::INT);
     if (ctx->expression()) {
         // If there's an expression, create an instruction to affect the
         // variable.
@@ -405,7 +415,7 @@ antlrcpp::Any IRGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     ++this->counterTempVariables;
     std::string variableName = "#" + std::to_string(this->counterTempVariables);
     // Add the temporary variable to the current block's scope.
-    this->currentBlock->getScope().addVariable(variableName, INT);
+    this->currentBlock->getScope().addVariable(variableName, VarType::INT);
     // Create an instruction to affect the temporary variable with the integer
     // value.
     auto instruction = std::make_unique<ir::AffectConst>(variableName, value);
@@ -421,7 +431,7 @@ antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     ++this->counterTempVariables;
     std::string variableName = "#" + std::to_string(this->counterTempVariables);
     // Add the temporary variable to the current block's scope.
-    this->currentBlock->getScope().addVariable(variableName, INT);
+    this->currentBlock->getScope().addVariable(variableName, VarType::INT);
     // Create an instruction to affect the temporary variable with the character
     // value.
     auto instruction = std::make_unique<ir::AffectConst>(variableName, value);
@@ -490,7 +500,7 @@ antlrcpp::Any IRGenVisitor::visitMult(ifccParser::MultContext *ctx) {
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     // Add the temporary variable to the current block's scope.
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
     std::unique_ptr<ir::IRInstr> instruction;
     // Determine the operation and create the corresponding instruction.
     if (ctx->op->getText()[0] == '*') {
@@ -515,7 +525,7 @@ antlrcpp::Any IRGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     // Add the temporary variable to the current block's scope.
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
     std::unique_ptr<ir::IRInstr> instruction;
     // Determine the operation and create the corresponding instruction.
     if (ctx->op->getText()[0] == '+') {
@@ -540,7 +550,7 @@ antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     // Add the temporary variable to the current block's scope.
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
     std::unique_ptr<ir::UnaryOp> instruction;
     // Determine the operation and create the corresponding instruction.
     if (ctx->op->getText()[0] == '-') {
