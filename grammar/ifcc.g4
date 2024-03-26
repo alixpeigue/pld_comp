@@ -6,7 +6,7 @@ prog : function* ;
 
 statement : declaration ';' | expression ';' | return_stmt | scope | if_stmt | loop | break_stmt | continue_stmt | switch_stmt ;
 
-function : type VARIABLE '(' ('int' VARIABLE)? (', int' VARIABLE)* ')' '{' statement* '}' ;
+function : type VARIABLE '(' (type VARIABLE)? ( ',' type VARIABLE)* ')' '{' statement* '}' ;
 
 scope : '{' statement* '}' ;
 

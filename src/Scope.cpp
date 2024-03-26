@@ -3,6 +3,16 @@
 #include <optional>
 #include <stdexcept>
 
+VarType::VarType(const std::string &name) {
+    if (name == "void") {
+        type = VOID;
+    } else if (name == "int") {
+        type = INT;
+    } else {
+        type = VOID;
+    }
+}
+
 std::optional<Variable> Scope::getVariable(const std::string &varName) {
     try {
         Variable var = vars.at(varName);

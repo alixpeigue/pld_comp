@@ -6,6 +6,14 @@
 #include "support/Any.h"
 #include <unordered_map>
 class TypeCheckingVisitor : public ifccBaseVisitor {
+
+    enum VarState { DECLARED, USED };
+
+    using Var = std::pair<VarType, VarState>;
+    using Scope = std::unordered_map<std::string, Var>;
+    using Function = std::vector<VarType>;
+
+    virtual antlrcpp::Any visitAxiom(ifccParser::AxiomContext *ctx) override;
     virtual antlrcpp::Any visitIntConst(
         ifccParser::IntConstContext *ctx) override;
 
@@ -32,9 +40,18 @@ class TypeCheckingVisitor : public ifccBaseVisitor {
     virtual antlrcpp::Any visitFunction(
         ifccParser::FunctionContext *ctx) override;
 
+    virtual antlrcpp::Any visitScope(ifccParser::ScopeContext *ctx) override;
+
+    virtual antlrcpp::Any visitDeclaration(
+        ifccParser::DeclarationContext *ctx) override;
+
+    virtual antlrcpp::Any visitDeclaAffect(
+        ifccParser::DeclaAffectContext *ctx) override;
+
+    Var *getVariable(const std::string &name);
+
 protected:
-    using Block = std::unordered_map<std::string, Variable>;
-    using Function = std::unordered_map<std::string, std::vector<VarType>>;
-    std::vector<Block> blocks;
-    std::vector<Function> functions;
+    std::vector<Scope> scopes;
+    std::unordered_map<std::string, Function> functions;
+    VarType currentType;
 };
