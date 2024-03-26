@@ -102,7 +102,8 @@ protected:
 
 class CFG {
 public:
-    CFG(std::string name) : name(std::move(name)) {}
+    CFG(std::string name, VarType returnType)
+        : name(std::move(name)), returnType(returnType) {}
     void addBlock(std::unique_ptr<BasicBlock> block);
     void addScope(std::unique_ptr<Scope> scope);
     void setEpilogue(BasicBlock *epilogue) { this->epilogue = epilogue; }
@@ -114,14 +115,19 @@ public:
         return blocks;
     }
     uint32_t getSize();
-    void addArg(const std::string &name, VarType type) { args.push_back(std::make_pair(name, type)); }
-    const std::vector<std::pair<std::string, VarType>> &getArgs() const { return args; }
+    void addArg(const std::string &name, VarType type) {
+        args.push_back(std::make_pair(name, type));
+    }
+    const std::vector<std::pair<std::string, VarType>> &getArgs() const {
+        return args;
+    }
     // Scope *mcainScope;
 
 protected:
     std::vector<std::unique_ptr<BasicBlock>> blocks;
     std::vector<std::unique_ptr<Scope>> scopes;
     std::vector<std::pair<std::string, VarType>> args;
+    VarType returnType;
     BasicBlock *epilogue;
     std::string name;
 };
