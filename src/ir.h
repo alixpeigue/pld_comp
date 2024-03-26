@@ -87,6 +87,19 @@ protected:
     BasicBlock *elseBlock;
 };
 
+class SwitchJump : public Next {
+public:
+    SwitchJump(std::string expressionTest, std::vector<std::pair<std::string, BasicBlock*>> caseTests)
+        : expressionTest(std::move(expressionTest)), caseTests(std::move(caseTests)) {}
+    virtual void accept(IRBaseVisitor &visitor) override;
+    const std::string &getExpressionTest() const { return expressionTest; }
+    const std::vector<std::pair<std::string, BasicBlock*>> &getCaseTests() const { return caseTests; }
+
+protected:
+    std::string expressionTest;
+    std::vector<std::pair<std::string, BasicBlock*>> caseTests;
+};
+
 class CFG {
 public:
     CFG(std::string name) : name(std::move(name)) {}

@@ -69,6 +69,10 @@ void ir::ConditionalJump::accept(IRBaseVisitor &visitor) {
     visitor.visitConditionalJump(*this);
 }
 
+void::ir::SwitchJump::accept(IRBaseVisitor &visitor) {
+    visitor.visitSwitchJump(*this);
+}
+
 void ir::Return::accept(IRBaseVisitor &visitor) { visitor.visitReturn(*this); }
 
 void ir::Call::accept(IRBaseVisitor &visitor) { visitor.visitCall(*this); }
