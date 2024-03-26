@@ -15,10 +15,6 @@ private:
     virtual void visitConditionalJump(ir::ConditionalJump &jump) override;
     virtual void visitReturn(ir::Return &ret) override;
     virtual void visitCall(ir::Call &call) override;
-
-    inline void writeOrCond(uint32_t left, uint32_t right, uint32_t to);
-    inline void writeAndCond(uint32_t left, uint32_t right, uint32_t to);
+    
     inline std::string getInstrFromOp(ir::BinOp::BinOpType op);
-
-    int currentCompBlock = 0;
 };

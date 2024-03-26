@@ -5,9 +5,9 @@
 
 void IRx86Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
-    // scope.print(std::cout);
-    // std::cout << "TO : " << affect.getTo() << " FROM " << affect.getFrom()
-    //           << "\n";
+     scope.print(std::cerr);
+     std::cerr << "TO : " << affect.getTo() << " FROM " << affect.getFrom()
+               << "\n";
     Variable to = scope.getVariable(affect.getTo()).value();
     Variable from = scope.getVariable(affect.getFrom()).value();
     std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
@@ -54,12 +54,6 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
         std::cout << "    " << instr << " al\n";
         std::cout << "    movzx   eax, al\n";
         std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
-    } else if (type == ir::BinOp::AND) { // a && b
-        writeAndCond(left.second, right.second, to.second);
-
-    } else if (type == ir::BinOp::OR) { // a || b
-        writeOrCond(left.second, right.second, to.second);
-
     } else {
         std::string instr = getInstrFromOp(type);
         std::cout << "    " << instr << " eax, DWORD PTR -" << right.second
@@ -113,8 +107,11 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
 
 void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     std::cout << bb.getName() << ":\n";
+    std::cerr << "ecriture ap le block";
     for (auto &instruction : bb.getInstructions()) {
+        std::cerr << "av";
         instruction->accept(*this);
+        std::cerr << "ap\n";
     }
     // Call end block here :
     auto next = bb.getNext();
@@ -205,57 +202,6 @@ void IRx86Visitor::visitCall(ir::Call &call) {
         << "    mov DWORD PTR -"
         << call.getBlock().getScope().getVariable(call.getRet()).value().second
         << "[rbp], eax\n";
-}
-
-inline void IRx86Visitor::writeOrCond(uint32_t left, uint32_t right,
-                                      uint32_t to) {
-    std::string block1 = ".OR" + std::to_string(currentCompBlock);
-    currentCompBlock++;
-    std::string block2 = ".OR" + std::to_string(currentCompBlock);
-    currentCompBlock++;
-    std::string block3 = ".OR" + std::to_string(currentCompBlock);
-    currentCompBlock++;
-
-    std::cout << "    cmp DWORD PTR -" << left << "[rbp], 0\n";
-    std::cout << "    jne " << block1 << "\n";
-    std::cout << "    cmp DWORD PTR -" << right << "[rbp], 0\n";
-    std::cout << "    je " << block2 << "\n";
-    std::cout << "    jmp " << block1 << "\n";
-
-    std::cout << block1 << ":\n";
-    std::cout << "    mov   eax, 1\n";
-    std::cout << "    jmp " << block3 << "\n";
-
-    std::cout << block2 << ":\n";
-    std::cout << "    mov   eax, 0\n";
-    std::cout << "    jmp " << block3 << "\n";
-
-    std::cout << block3 << ":\n";
-    std::cout << "    movzx   eax, al\n";
-    std::cout << "    mov DWORD PTR -" << to << "[rbp], eax\n";
-}
-
-inline void IRx86Visitor::writeAndCond(uint32_t left, uint32_t right,
-                                       uint32_t to) {
-    std::string block1 = ".AND" + std::to_string(currentCompBlock);
-    currentCompBlock++;
-    std::string block2 = ".AND" + std::to_string(currentCompBlock);
-    currentCompBlock++;
-
-    std::cout << "    cmp DWORD PTR -" << left << "[rbp], 0\n";
-    std::cout << "    je " << block1 << "\n";
-    std::cout << "    cmp DWORD PTR -" << right << "[rbp], 0\n";
-    std::cout << "    je " << block1 << "\n";
-    std::cout << "    mov   eax, 1\n";
-    std::cout << "    jmp " << block2 << "\n";
-
-    std::cout << block1 << ":\n";
-    std::cout << "    mov   eax, 0\n";
-    std::cout << "    jmp " << block2 << "\n";
-
-    std::cout << block2 << ":\n";
-    std::cout << "    movzx   eax, al\n";
-    std::cout << "    mov DWORD PTR -" << to << "[rbp], eax\n";
 }
 
 /*

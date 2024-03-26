@@ -162,7 +162,7 @@ protected:
 class BinOp : public IRInstr {
 public:
     enum BinOpType { ADD, SUB, DIV, MUL, MOD, SHIFT_R, SHIFT_L, GT, LT, GTE,
-                     LTE, EQ, NEQ, AND_BIN, OR_BIN, XOR_BIN, AND, OR };
+                     LTE, EQ, NEQ, AND_BIN, OR_BIN, XOR_BIN };
 
     BinOp(BinOpType type, std::string to, std::string from, std::string right)
         : type(type), to(to), left(from), right(right) {}
