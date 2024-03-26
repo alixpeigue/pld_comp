@@ -8,7 +8,9 @@
 
 enum class VarType { VOID, INT };
 
-static uint32_t typeSize[] = {4};
+static uint32_t typeSize[] = {0, 4};
+
+uint32_t typePriority[] = {0, 1};
 
 using Variable = std::pair<VarType, uint32_t>;
 
