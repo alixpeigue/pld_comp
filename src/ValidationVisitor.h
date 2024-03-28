@@ -1,12 +1,16 @@
 #pragma once
 
+#include "ErrorReporter.h"
 #include "Scope.h"
 #include "ifccBaseVisitor.h"
 #include "ifccParser.h"
 #include "support/Any.h"
 #include <unordered_map>
-class TypeCheckingVisitor : public ifccBaseVisitor {
+class ValidationVisitor : public ifccBaseVisitor {
+public:
+    ValidationVisitor(const ErrorReporter &reporter) : reporter(reporter) {}
 
+protected:
     enum VarState { DECLARED, USED };
 
     using Var = std::pair<VarType, VarState>;
@@ -50,8 +54,8 @@ class TypeCheckingVisitor : public ifccBaseVisitor {
 
     Var *getVariable(const std::string &name);
 
-protected:
     std::vector<Scope> scopes;
     std::unordered_map<std::string, Function> functions;
     VarType currentType;
+    const ErrorReporter &reporter;
 };
