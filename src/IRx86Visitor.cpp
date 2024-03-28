@@ -5,9 +5,9 @@
 
 void IRx86Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
-     scope.print(std::cerr);
-     std::cerr << "TO : " << affect.getTo() << " FROM " << affect.getFrom()
-               << "\n";
+    scope.print(std::cerr);
+    std::cerr << "TO : " << affect.getTo() << " FROM " << affect.getFrom()
+              << "\n";
     Variable to = scope.getVariable(affect.getTo()).value();
     Variable from = scope.getVariable(affect.getFrom()).value();
     std::cout << "    mov eax, DWORD PTR -" << from.second << "[rbp]\n";
@@ -107,11 +107,8 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
 
 void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     std::cout << bb.getName() << ":\n";
-    std::cerr << "ecriture ap le block";
     for (auto &instruction : bb.getInstructions()) {
-        std::cerr << "av";
         instruction->accept(*this);
-        std::cerr << "ap\n";
     }
     // Call end block here :
     auto next = bb.getNext();
@@ -160,12 +157,16 @@ void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
 }
 
 void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
-    Variable expr = jump.getBlock().getScope().getVariable(jump.getExpressionTest()).value();
+    Variable expr = jump.getBlock()
+                        .getScope()
+                        .getVariable(jump.getExpressionTest())
+                        .value();
     auto caseTests = jump.getCaseTests();
 
     for (size_t i = 0; i < caseTests.size(); ++i) {
         auto caseTest = caseTests[i];
-        std::cout << "    cmp DWORD PTR -" << expr.second << "[rbp], " << caseTest.first << "\n";
+        std::cout << "    cmp DWORD PTR -" << expr.second << "[rbp], "
+                  << caseTest.first << "\n";
         std::cout << "    je " << caseTest.second->getName() << "\n";
     }
 }
