@@ -377,11 +377,13 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
 
 antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     ifccParser::Return_stmtContext *ctx) {
-    // Visit the expression to be returned.
-    std::string toReturn = this->visit(ctx->expression());
-    // Create an instruction to affect the return value.
-    auto instruction = std::make_unique<ir::Affect>("#return", toReturn);
-    this->currentBlock->addInstr(std::move(instruction));
+    if (ctx->expression()) {
+        // Visit the expression to be returned.
+        std::string toReturn = this->visit(ctx->expression());
+        // Create an instruction to affect the return value.
+        auto instruction = std::make_unique<ir::Affect>("#return", toReturn);
+        this->currentBlock->addInstr(std::move(instruction));
+    }
     // Set up an unconditional jump to the function's epilogue.
     this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(
         &this->currentFunction->getEpilogue()));
