@@ -4,20 +4,22 @@
 #include "ifccVisitor.h"
 #include "support/Any.h"
 #include <optional>
+#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
 
 antlrcpp::Any ValidationVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     this->visitChildren(ctx);
-    for (auto &scope : this->scopes) {
-        for (auto &var : scope) {
-            if (var.second.second == DECLARED) {
-                std::cout << "Waring : variable '" << var.first
-                          << "' is declared but never used\n";
-            }
-        }
-    }
+    // for (auto &scope : this->scopes) {
+    //     for (auto &var : scope) {
+    //         std::cout << "Variable" << var.first << std::endl;
+    //         if (var.second.second == VarState::DECLARED) {
+    //             std::cerr << "Waring : variable '" << var.first
+    //                       << "' is declared but never used\n";
+    //         }
+    //     }
+    // }
     return 0;
 }
 
@@ -37,7 +39,7 @@ antlrcpp::Any ValidationVisitor::visitVariable(
     std::string name = ctx->VARIABLE()->getText();
 
     if (auto var = this->getVariable(name)) {
-        var->second = USED;
+        var->second = VarState::USED;
         return var->first;
     } else {
         std::ostringstream message;
@@ -71,9 +73,9 @@ antlrcpp::Any ValidationVisitor::visitAdd(ifccParser::AddContext *ctx) {
 
 antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
 
-    if (auto ltype = this->getVariable(ctx->VARIABLE()->getText())) {
-        return ltype->first;
-    } else {
+    Var *ltype;
+
+    if (!(ltype = this->getVariable(ctx->VARIABLE()->getText()))) {
         std::ostringstream message;
         message << "Variable '" << ctx->VARIABLE()->getText()
                 << "' has not been declared";
@@ -90,6 +92,8 @@ antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
         this->reporter.report(message.str(), ctx);
         exit(1);
     }
+
+    return ltype->first;
 }
 
 antlrcpp::Any ValidationVisitor::visitFunc_call(
@@ -103,12 +107,12 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
         return ret;
     }
     if (f.size() - 1 > ctx->expression().size()) {
-        std::cout << f.size() << " " << ctx->expression().size();
-        std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
-                  << ":"
-                  << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
-                  << " too few arguments for function '"
-                  << ctx->VARIABLE()->getText() << "'\n";
+        std::ostringstream message;
+        message << "Too few arguments : function '"
+                << ctx->VARIABLE()->getText() << "' takes " << f.size() - 1
+                << " arguments but " << ctx->expression().size()
+                << " were given";
+        this->reporter.report(message.str(), ctx);
         exit(1);
     }
     return f.at(0);
@@ -129,11 +133,19 @@ antlrcpp::Any ValidationVisitor::visitFunction(
 
     for (int i = 1; i < ctx->type().size(); ++i) {
         this->scopes.back()[ctx->VARIABLE(i)->getText()] =
-            std::make_pair(ctx->type(i)->getText(), DECLARED);
+            std::make_pair(ctx->type(i)->getText(), VarState::DECLARED);
     }
 
     this->functions[funcName] = function;
     this->visitChildren(ctx);
+
+    for (auto &var : this->scopes.back()) {
+        if (var.second.second == VarState::DECLARED) {
+            std::cerr << "Waring : variable '" << var.first
+                      << "' is declared but never used\n";
+        }
+    }
+
     this->scopes.pop_back();
     return 0;
 }
@@ -141,6 +153,12 @@ antlrcpp::Any ValidationVisitor::visitFunction(
 antlrcpp::Any ValidationVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     this->scopes.push_back(Scope());
     this->visitChildren(ctx);
+    for (auto &var : this->scopes.back()) {
+        if (var.second.second == VarState::DECLARED) {
+            std::cerr << "Waring : variable '" << var.first
+                      << "' is declared but never used\n";
+        }
+    }
     this->scopes.pop_back();
     return 0;
 }
@@ -176,7 +194,8 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     }
 
     std::string varName = ctx->VARIABLE()->getText();
-    this->scopes.back()[varName] = std::make_pair(this->currentType, DECLARED);
+    this->scopes.back()[varName] =
+        std::make_pair(this->currentType, VarState::DECLARED);
     return 0;
 }
 
