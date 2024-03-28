@@ -458,7 +458,7 @@ antlrcpp::Any IRGenVisitor::visitAffect(
         // creer le temp
         ++counterTempVariables;
         std::string tmpTo = "#" + std::to_string(counterTempVariables);
-        this->currentBlock->getScope().addVariable(tmpTo, INT);
+        this->currentBlock->getScope().addVariable(tmpTo, VarType::INT);
 
         // declare l'instruction operation
         ir::BinOp::BinOpType operateur;
@@ -569,7 +569,7 @@ antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     if (ctx->op->getText() == "<<") {
@@ -588,7 +588,7 @@ antlrcpp::Any IRGenVisitor::visitCompare(ifccParser::CompareContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     if (ctx->op->getText() == "<") {
@@ -613,7 +613,7 @@ antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     if (ctx->op->getText() == "==") {
@@ -632,7 +632,7 @@ antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
@@ -646,7 +646,7 @@ antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
@@ -660,7 +660,7 @@ antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
     std::string right = visit(ctx->expression(1));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
 
     std::unique_ptr<ir::IRInstr> instruction;
     instruction =
@@ -687,7 +687,7 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     // on ajoute la variable de retour a l'index
     ++counterTempVariables;
     std::string tmp = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(tmp, INT);
+    this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     Scope &currentScope = this->currentBlock->getScope();
 
@@ -758,7 +758,7 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     // on ajoute la variable de retour a l'index
     ++counterTempVariables;
     std::string tmp = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(tmp, INT);
+    this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     Scope &currentScope = this->currentBlock->getScope();
 
@@ -829,7 +829,7 @@ antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
     auto instruction =
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_INC, to, from);
     this->currentBlock->addInstr(std::move(instruction));
@@ -840,7 +840,7 @@ antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
-    this->currentBlock->getScope().addVariable(to, INT);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
     auto instruction =
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_DEC, to, from);
     this->currentBlock->addInstr(std::move(instruction));

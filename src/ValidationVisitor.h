@@ -11,7 +11,7 @@ public:
     ValidationVisitor(const ErrorReporter &reporter) : reporter(reporter) {}
 
 protected:
-    enum VarState { DECLARED, USED };
+    enum class VarState { DECLARED, USED };
 
     using Var = std::pair<VarType, VarState>;
     using Scope = std::unordered_map<std::string, Var>;
