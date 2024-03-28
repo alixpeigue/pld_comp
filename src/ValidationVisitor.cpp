@@ -1,13 +1,14 @@
 #include "Scope.h"
-#include "TypeCheckingVisitor.h"
+#include "ValidationVisitor.h"
 #include "ifccParser.h"
 #include "ifccVisitor.h"
 #include "support/Any.h"
 #include <optional>
 #include <ranges>
+#include <sstream>
 #include <stdexcept>
 
-antlrcpp::Any TypeCheckingVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
+antlrcpp::Any ValidationVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     this->visitChildren(ctx);
     for (auto &scope : this->scopes) {
         for (auto &var : scope) {
@@ -20,17 +21,17 @@ antlrcpp::Any TypeCheckingVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitIntConst(
+antlrcpp::Any ValidationVisitor::visitIntConst(
     ifccParser::IntConstContext *ctx) {
     return VarType(VarType::INT);
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitCharConst(
+antlrcpp::Any ValidationVisitor::visitCharConst(
     ifccParser::CharConstContext *ctx) {
     return VarType(VarType::INT);
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitVariable(
+antlrcpp::Any ValidationVisitor::visitVariable(
     ifccParser::VariableContext *ctx) {
 
     std::string name = ctx->VARIABLE()->getText();
@@ -39,61 +40,59 @@ antlrcpp::Any TypeCheckingVisitor::visitVariable(
         var->second = USED;
         return var->first;
     } else {
-        std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
-                  << ":"
-                  << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
-                  << ", variable '" << name << "' has not been declared\n";
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' is used withoud being initialized";
+        reporter.report(message.str(), ctx);
         exit(1);
     }
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitParen(ifccParser::ParenContext *ctx) {
+antlrcpp::Any ValidationVisitor::visitParen(ifccParser::ParenContext *ctx) {
     return this->visit(ctx->expression());
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitUnaryAdd(
+antlrcpp::Any ValidationVisitor::visitUnaryAdd(
     ifccParser::UnaryAddContext *ctx) {
     return this->visit(ctx->expression());
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitMult(ifccParser::MultContext *ctx) {
+antlrcpp::Any ValidationVisitor::visitMult(ifccParser::MultContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitAdd(ifccParser::AddContext *ctx) {
+antlrcpp::Any ValidationVisitor::visitAdd(ifccParser::AddContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitAffect(ifccParser::AffectContext *ctx) {
-
-    VarType rtype = this->visit(ctx->expression());
-
-    if (rtype == VarType::VOID) {
-        std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
-                  << ":"
-                  << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
-                  << " assign void value to variable '"
-                  << ctx->VARIABLE()->getText() << "'\n";
-        exit(1);
-    }
+antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
 
     if (auto ltype = this->getVariable(ctx->VARIABLE()->getText())) {
         return ltype->first;
     } else {
-        std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
-                  << ":"
-                  << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
-                  << " assign to undeclared variable '"
-                  << ctx->VARIABLE()->getText() << "'\n";
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' has not been declared";
+        this->reporter.report(message.str(), ctx);
+        exit(1);
+    }
+
+    VarType rtype = this->visit(ctx->expression());
+
+    if (rtype == VarType::VOID) {
+        std::ostringstream message;
+        message << "Assign void value '" << ctx->expression()->getText()
+                << "' to variable '" << ctx->VARIABLE()->getText() << "'";
+        this->reporter.report(message.str(), ctx);
         exit(1);
     }
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitFunc_call(
+antlrcpp::Any ValidationVisitor::visitFunc_call(
     ifccParser::Func_callContext *ctx) {
     std::string funcName = ctx->VARIABLE()->getText();
     Function f;
@@ -115,7 +114,7 @@ antlrcpp::Any TypeCheckingVisitor::visitFunc_call(
     return f.at(0);
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitFunction(
+antlrcpp::Any ValidationVisitor::visitFunction(
     ifccParser::FunctionContext *ctx) {
 
     this->scopes.push_back(Scope());
@@ -139,22 +138,28 @@ antlrcpp::Any TypeCheckingVisitor::visitFunction(
     return 0;
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitScope(ifccParser::ScopeContext *ctx) {
+antlrcpp::Any ValidationVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     this->scopes.push_back(Scope());
     this->visitChildren(ctx);
     this->scopes.pop_back();
     return 0;
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitDeclaration(
+antlrcpp::Any ValidationVisitor::visitDeclaration(
     ifccParser::DeclarationContext *ctx) {
 
     this->currentType = ctx->type()->getText();
+
+    if (this->currentType == VarType::VOID) {
+        this->reporter.report("Illegal type 'void' for variable", ctx->type());
+        exit(1);
+    }
+
     this->visitChildren(ctx);
     return 0;
 }
 
-antlrcpp::Any TypeCheckingVisitor::visitDeclaAffect(
+antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
 
     if (ctx->expression()) {
@@ -162,11 +167,10 @@ antlrcpp::Any TypeCheckingVisitor::visitDeclaAffect(
         VarType rtype = this->visit(ctx->expression());
 
         if (rtype == VarType::VOID) {
-            std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
-                      << ":"
-                      << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
-                      << " assign void value to variable '"
-                      << ctx->VARIABLE()->getText() << "'\n";
+            std::ostringstream message;
+            message << "Assign void value '" << ctx->expression()->getText()
+                    << "' to variable '" << ctx->VARIABLE()->getText() << "'";
+            this->reporter.report(message.str(), ctx);
             exit(1);
         }
     }
@@ -176,7 +180,7 @@ antlrcpp::Any TypeCheckingVisitor::visitDeclaAffect(
     return 0;
 }
 
-TypeCheckingVisitor::Var *TypeCheckingVisitor::getVariable(
+ValidationVisitor::Var *ValidationVisitor::getVariable(
     const std::string &name) {
 
     for (auto &scope : scopes | std::ranges::views::reverse) {
