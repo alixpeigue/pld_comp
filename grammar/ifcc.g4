@@ -33,7 +33,7 @@ declaration: type declaAffect (',' declaAffect)*;
 declaAffect: VARIABLE '=' expression | 
              VARIABLE;
 
-return_stmt: RETURN expression ';' ;
+return_stmt: RETURN expression? ';' ;
 
 expression: INT_CONST # intConst | 
             CHAR_CONST #charConst | 

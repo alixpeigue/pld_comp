@@ -157,6 +157,20 @@ antlrcpp::Any TypeCheckingVisitor::visitDeclaration(
 antlrcpp::Any TypeCheckingVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
 
+    if (ctx->expression()) {
+
+        VarType rtype = this->visit(ctx->expression());
+
+        if (rtype == VarType::VOID) {
+            std::cerr << "Error at " << ctx->VARIABLE()->getSymbol()->getLine()
+                      << ":"
+                      << ctx->VARIABLE()->getSymbol()->getCharPositionInLine()
+                      << " assign void value to variable '"
+                      << ctx->VARIABLE()->getText() << "'\n";
+            exit(1);
+        }
+    }
+
     std::string varName = ctx->VARIABLE()->getText();
     this->scopes.back()[varName] = std::make_pair(this->currentType, DECLARED);
     return 0;
