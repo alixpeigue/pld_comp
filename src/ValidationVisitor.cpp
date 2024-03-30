@@ -157,15 +157,7 @@ antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
         exit(1);
     }
 
-    VarType rtype = this->visit(ctx->expression());
-
-    if (rtype == VarType::VOID) {
-        std::ostringstream message;
-        message << "Assign void value '" << ctx->expression()->getText()
-                << "' to variable '" << ctx->VARIABLE()->getText() << "'";
-        this->reporter.report(message.str(), ctx);
-        exit(1);
-    }
+    this->visit(ctx->expression());
 
     return ltype->first;
 }
@@ -215,6 +207,11 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
                 << " arguments but " << ctx->expression().size()
                 << " were given";
         this->reporter.report(message.str(), ctx);
+        exit(1);
+    }
+    if (f.at(0) == VarType::VOID &&
+        dynamic_cast<ifccParser::ExpressionContext *>(ctx->parent)) {
+        this->reporter.report("void value not ignored as it should be", ctx);
         exit(1);
     }
     return f.at(0);
