@@ -54,6 +54,34 @@ antlrcpp::Any ValidationVisitor::visitParen(ifccParser::ParenContext *ctx) {
     return this->visit(ctx->expression());
 }
 
+antlrcpp::Any ValidationVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
+    std::string name = ctx->VARIABLE()->getText();
+
+    if (auto var = this->getVariable(name)) {
+        return var->first;
+    } else {
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' is used withoud being initialized";
+        reporter.report(message.str(), ctx);
+        exit(1);
+    }
+}
+
+antlrcpp::Any ValidationVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
+    std::string name = ctx->VARIABLE()->getText();
+
+    if (auto var = this->getVariable(name)) {
+        return var->first;
+    } else {
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' is used withoud being initialized";
+        reporter.report(message.str(), ctx);
+        exit(1);
+    }
+}
+
 antlrcpp::Any ValidationVisitor::visitUnaryAdd(
     ifccParser::UnaryAddContext *ctx) {
     return this->visit(ctx->expression());
@@ -69,6 +97,52 @@ antlrcpp::Any ValidationVisitor::visitAdd(ifccParser::AddContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
+}
+
+antlrcpp::Any ValidationVisitor::visitShift(ifccParser::ShiftContext *ctx) {
+    VarType t1 = this->visit(ctx->expression(0));
+    VarType t2 = this->visit(ctx->expression(1));
+    if (t2 != VarType::INT) {
+        std::ostringstream message;
+        message << "'" << ctx->expression(1)->getText() << "' has invalid type";
+        reporter.report(message.str(), ctx);
+    }
+    return t1;
+}
+
+antlrcpp::Any ValidationVisitor::visitCompare(ifccParser::CompareContext *ctx) {
+    return VarType(VarType::INT);
+}
+
+antlrcpp::Any ValidationVisitor::visitCompareEq(
+    ifccParser::CompareEqContext *ctx) {
+    return VarType(VarType::INT);
+}
+
+antlrcpp::Any ValidationVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
+    VarType t1 = this->visit(ctx->expression(0));
+    VarType t2 = this->visit(ctx->expression(1));
+    return std::max(t1, t2);
+}
+
+antlrcpp::Any ValidationVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
+    VarType t1 = this->visit(ctx->expression(0));
+    VarType t2 = this->visit(ctx->expression(1));
+    return std::max(t1, t2);
+}
+
+antlrcpp::Any ValidationVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
+    VarType t1 = this->visit(ctx->expression(0));
+    VarType t2 = this->visit(ctx->expression(1));
+    return std::max(t1, t2);
+}
+
+antlrcpp::Any ValidationVisitor::visitAnd(ifccParser::AndContext *ctx) {
+    return VarType(VarType::INT);
+}
+
+antlrcpp::Any ValidationVisitor::visitOr(ifccParser::OrContext *ctx) {
+    return VarType(VarType::INT);
 }
 
 antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
@@ -94,6 +168,34 @@ antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
     }
 
     return ltype->first;
+}
+
+antlrcpp::Any ValidationVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
+    std::string name = ctx->VARIABLE()->getText();
+
+    if (auto var = this->getVariable(name)) {
+        return var->first;
+    } else {
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' is used withoud being initialized";
+        reporter.report(message.str(), ctx);
+        exit(1);
+    }
+}
+
+antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
+    std::string name = ctx->VARIABLE()->getText();
+
+    if (auto var = this->getVariable(name)) {
+        return var->first;
+    } else {
+        std::ostringstream message;
+        message << "Variable '" << ctx->VARIABLE()->getText()
+                << "' is used withoud being initialized";
+        reporter.report(message.str(), ctx);
+        exit(1);
+    }
 }
 
 antlrcpp::Any ValidationVisitor::visitFunc_call(
