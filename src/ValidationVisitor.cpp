@@ -138,10 +138,12 @@ antlrcpp::Any ValidationVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
 }
 
 antlrcpp::Any ValidationVisitor::visitAnd(ifccParser::AndContext *ctx) {
+    this->visitChildren(ctx);
     return VarType(VarType::INT);
 }
 
 antlrcpp::Any ValidationVisitor::visitOr(ifccParser::OrContext *ctx) {
+    this->visitChildren(ctx);
     return VarType(VarType::INT);
 }
 
@@ -209,15 +211,6 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
         this->reporter.report(message.str(), ctx);
         exit(1);
     }
-    // if (f.at(0) == VarType::VOID &&
-    //     dynamic_cast<ifccParser::ExpressionContext *>(ctx->parent) ||
-    //     dynamic_cast<ifccParser::Return_stmtContext *)(ctx->parent) ||
-    //     // dynamic_cast<ifccParser::While_stmtContext *)(ctx->parent) ||
-    //     // dynamic_cast<ifccParser:: {
-    //     this->reporter.report("void value not ignored as it should be", ctx);
-    //     exit(1);
-    // }
-    // return f.at(0);
     if (f.at(0) == VarType::VOID &&
         !dynamic_cast<ifccParser::StatementContext *>(ctx->parent)) {
 
@@ -289,18 +282,20 @@ antlrcpp::Any ValidationVisitor::visitDeclaration(
 antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
 
-    if (ctx->expression()) {
+    // if (ctx->expression()) {
 
-        VarType rtype = this->visit(ctx->expression());
+    //     VarType rtype = this->visit(ctx->expression());
 
-        if (rtype == VarType::VOID) {
-            std::ostringstream message;
-            message << "Assign void value '" << ctx->expression()->getText()
-                    << "' to variable '" << ctx->VARIABLE()->getText() << "'";
-            this->reporter.report(message.str(), ctx);
-            exit(1);
-        }
-    }
+    //     if (rtype == VarType::VOID) {
+    //         std::ostringstream message;
+    //         message << "Assign void value '" << ctx->expression()->getText()
+    //                 << "' to variable '" << ctx->VARIABLE()->getText() <<
+    //                 "'";
+    //         this->reporter.report(message.str(), ctx);
+    //         exit(1);
+    //     }
+    // }
+    this->visitChildren(ctx);
 
     std::string varName = ctx->VARIABLE()->getText();
     this->scopes.back()[varName] =
