@@ -209,8 +209,18 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
         this->reporter.report(message.str(), ctx);
         exit(1);
     }
+    // if (f.at(0) == VarType::VOID &&
+    //     dynamic_cast<ifccParser::ExpressionContext *>(ctx->parent) ||
+    //     dynamic_cast<ifccParser::Return_stmtContext *)(ctx->parent) ||
+    //     // dynamic_cast<ifccParser::While_stmtContext *)(ctx->parent) ||
+    //     // dynamic_cast<ifccParser:: {
+    //     this->reporter.report("void value not ignored as it should be", ctx);
+    //     exit(1);
+    // }
+    // return f.at(0);
     if (f.at(0) == VarType::VOID &&
-        dynamic_cast<ifccParser::ExpressionContext *>(ctx->parent)) {
+        !dynamic_cast<ifccParser::StatementContext *>(ctx->parent)) {
+
         this->reporter.report("void value not ignored as it should be", ctx);
         exit(1);
     }
