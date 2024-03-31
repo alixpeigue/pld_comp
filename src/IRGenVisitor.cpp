@@ -77,7 +77,7 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     ir::BasicBlock *elseBlock = createBlock(".BB");
 
     ir::BasicBlock *end = elseBlock;
-    std::unique_ptr<ir::Next> endNext = std::move(currentBlock->getNext());
+    std::unique_ptr<ir::Next> endNext = currentBlock->getNext();
 
     // Check if there is an 'else' statement.
     if (ctx->else_stmt) {
@@ -218,12 +218,11 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
 antlrcpp::Any IRGenVisitor::visitSwitch_stmt(
     ifccParser::Switch_stmtContext *ctx) {
     // Retrieve the current scope.
-    Scope &currentScope = this->currentBlock->getScope();
 
     auto defaultBlock = this->createBlock(".BB");
 
     ir::BasicBlock *end = defaultBlock;
-    std::unique_ptr<ir::Next> endNext = std::move(currentBlock->getNext());
+    std::unique_ptr<ir::Next> endNext = currentBlock->getNext();
 
     if (ctx->default_case_stmt()) {
         end = this->createBlock(".BB");
@@ -689,8 +688,6 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     std::string tmp = "#" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
-    Scope &currentScope = this->currentBlock->getScope();
-
     // On créé le lazy block auquel on accede uniquement si la premiere partie
     // est vrai
     ir::BasicBlock *lazyBlock = createBlock(".AND");
@@ -759,8 +756,6 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     ++counterTempVariables;
     std::string tmp = "#" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
-
-    Scope &currentScope = this->currentBlock->getScope();
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie
     // est fausse

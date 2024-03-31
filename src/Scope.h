@@ -29,7 +29,7 @@ class Scope {
 public:
     Scope(Scope &&scope)
         : parent(scope.parent), vars(std::move(scope.vars)), size(scope.size) {}
-    Scope(Scope *parent) : size(0), parent(parent){};
+    Scope(Scope *parent) : parent(parent), size(0){};
 
     std::optional<Variable> getVariable(const std::string &varName);
     uint32_t getSize();

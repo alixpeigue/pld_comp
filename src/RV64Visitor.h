@@ -15,5 +15,7 @@ private:
     virtual void visitReturn(ir::Return &ret) override;
     virtual void visitCall(ir::Call &call) override;
 
-    inline std::string getInstrFromOp(ir::BinOp::BinOpType op);
+    inline std::string getInstrFromBinOp(ir::BinOp::BinOpType op);
+
+    int labelCount = 0;
 };

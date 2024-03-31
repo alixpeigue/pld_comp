@@ -197,7 +197,7 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
     Function f;
     try {
         f = this->functions.at(funcName);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range &) {
         VarType ret = VarType::INT;
         return ret;
     }
@@ -232,7 +232,7 @@ antlrcpp::Any ValidationVisitor::visitFunction(
         function.push_back(type->getText());
     }
 
-    for (int i = 1; i < ctx->type().size(); ++i) {
+    for (uint32_t i = 1; i < ctx->type().size(); ++i) {
         this->scopes.back()[ctx->VARIABLE(i)->getText()] =
             std::make_pair(ctx->type(i)->getText(), VarState::DECLARED);
     }

@@ -18,7 +18,7 @@ std::optional<Variable> Scope::getVariable(const std::string &varName) {
         Variable var = vars.at(varName);
         var.second += parent ? parent->getSize() : 0;
         return var;
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range &) {
         return parent ? parent->getVariable(varName) : std::nullopt;
     }
 }

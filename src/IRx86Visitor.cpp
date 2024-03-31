@@ -259,6 +259,8 @@ inline std::string IRx86Visitor::getInstrFromOp(ir::BinOp::BinOpType op) {
     case ir::BinOp::NEQ:
         instr = "setne";
         break;
+    default:
+        break;
     }
     return instr;
 }
