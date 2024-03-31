@@ -71,7 +71,13 @@ argparser.add_argument('-d','--debug',action="count",default=0,
                        help='Increase quantity of debugging messages (only useful to debug the test script itself)')
 argparser.add_argument('-v','--verbose',action="count",default=0,
                        help='Increase verbosity level. You can use this option multiple times.')
-argparser.add_argument('-w','--wrapper',metavar='PATH',
+argparser.add_argument('--ifcc-wrapper',metavar='PATH',
+                       help='Invoke your compiler through the shell script at PATH. (default: `ifcc-wrapper.sh`)')
+argparser.add_argument('--gcc-wrapper',metavar='PATH',
+                       help='Invoke your compiler through the shell script at PATH. (default: `ifcc-wrapper.sh`)')
+argparser.add_argument('--as-wrapper',metavar='PATH',
+                       help='Invoke your compiler through the shell script at PATH. (default: `ifcc-wrapper.sh`)')
+argparser.add_argument('--exec-wrapper',metavar='PATH',
                        help='Invoke your compiler through the shell script at PATH. (default: `ifcc-wrapper.sh`)')
 
 args=argparser.parse_args()
@@ -127,17 +133,26 @@ for inputfilename in inputfilenames:
 
 ## Last but not least: we now locate the "wrapper script" that we will
 ## use to invoke ifcc
-if args.wrapper:
-    wrapper=os.path.realpath(os.getcwd()+"/"+ args.wrapper)
-else:
-    wrapper=os.path.dirname(os.path.realpath(__file__))+"/ifcc-wrapper.sh"
+gcc_wrapper=os.path.realpath(os.getcwd()+"/"+ args.gcc_wrapper)
+ifcc_wrapper=os.path.realpath(os.getcwd()+"/"+ args.ifcc_wrapper)
+as_wrapper=os.path.realpath(os.getcwd()+"/"+ args.as_wrapper)
+exec_wrapper=os.path.realpath(os.getcwd()+"/"+ args.exec_wrapper)
 
-if not os.path.isfile(wrapper):
-    print("error: cannot find "+os.path.basename(wrapper)+" in directory: "+os.path.dirname(wrapper))
+if not os.path.isfile(gcc_wrapper):
+    print("error: cannot find "+os.path.basename(gcc_wrapper)+" in directory: "+os.path.dirname(gcc_wrapper))
+    exit(1)
+if not os.path.isfile(ifcc_wrapper):
+    print("error: cannot find "+os.path.basename(ifcc_wrapper)+" in directory: "+os.path.dirname(ifcc_wrapper))
+    exit(1)
+if not os.path.isfile(as_wrapper):
+    print("error: cannot find "+os.path.basename(as_wrapper)+" in directory: "+os.path.dirname(as_wrapper))
+    exit(1)
+if not os.path.isfile(exec_wrapper):
+    print("error: cannot find "+os.path.basename(exec_wrapper)+" in directory: "+os.path.dirname(exec_wrapper))
     exit(1)
 
 if args.debug:
-    print("debug: wrapper path: "+wrapper)
+    print("debug: wrapper path: "+ifcc_wrapper)
         
 ######################################################################################
 ## PREPARE step: copy all test-cases under ifcc-test-output
@@ -189,17 +204,17 @@ for jobname in jobs:
     jobname = jobname[17:]
     
     ## Reference compiler = GCC
-    gccstatus=command("gcc -S -masm=intel -o asm-gcc.s input.c", "gcc-compile.txt")
+    gccstatus=command(gcc_wrapper + " asm-gcc.s input.c", "gcc-compile.txt")
     if gccstatus == 0:
         # test-case is a valid program. we should run it
-        gccstatus=command("gcc -o exe-gcc asm-gcc.s", "gcc-link.txt")
+        gccstatus=command(as_wrapper + " exe-gcc asm-gcc.s", "gcc-link.txt")
     if gccstatus == 0: # then both compile and link stage went well
-        exegccstatus=command("./exe-gcc", "gcc-execute.txt")
+        exegccstatus=command(exec_wrapper + " ./exe-gcc", "gcc-execute.txt")
         if args.verbose >=2:
             dumpfile("gcc-execute.txt")
             
     ## IFCC compiler
-    ifccstatus=command(wrapper+" asm-ifcc.s input.c", "ifcc-compile.txt")
+    ifccstatus=command(ifcc_wrapper+" asm-ifcc.s input.c", "ifcc-compile.txt")
     
     if gccstatus != 0 and ifccstatus != 0:
         ## ifcc correctly rejects invalid program -> test-case ok
@@ -219,7 +234,7 @@ for jobname in jobs:
         continue
     else:
         ## ifcc accepts to compile valid program -> let's link it
-        ldstatus=command("gcc -o exe-ifcc asm-ifcc.s", "ifcc-link.txt")
+        ldstatus=command(as_wrapper + " exe-ifcc asm-ifcc.s", "ifcc-link.txt")
         if ldstatus:
             errorText = errorText + '[' + jobname + "] : your compiler produces incorrect assembly\n"
             if args.verbose:
@@ -229,7 +244,7 @@ for jobname in jobs:
     ## both compilers  did produce an  executable, so now we  run both
     ## these executables and compare the results.
         
-    command("./exe-ifcc","ifcc-execute.txt")
+    command(exec_wrapper + " ./exe-ifcc","ifcc-execute.txt")
     if open("gcc-execute.txt").read() != open("ifcc-execute.txt").read() :
         errorText = errorText + '[' + jobname + "] : different results at execution\n"
         if args.verbose:

@@ -148,6 +148,10 @@ inline std::string RV64Visitor::getInstrFromOp(ir::BinOp::BinOpType op) {
         return "addw";
     case ir::BinOp::SUB:
         return "subw";
+    case ir::BinOp::SHIFT_L:
+        return "sla";
+    case ir::BinOp::SHIFT_R:
+        return "sra";
     }
     return "";
 }
