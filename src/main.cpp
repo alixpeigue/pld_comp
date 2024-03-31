@@ -1,10 +1,12 @@
-#include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <sstream>
 
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
+#include "RV64Visitor.h"
 #include "UserErrorReporter.h"
 #include "ValidationVisitor.h"
 #include "antlr4-runtime.h"
@@ -16,23 +18,62 @@
 #include "Scope.h"
 #include "ir.h"
 
+#include <unistd.h>
+
 using namespace antlr4;
 using namespace std;
 
-int main(int argn, const char **argv) {
+int main(int argn, char **argv) {
 
     // Gestion de l'input
-    stringstream in;
-    if (argn == 2) {
-        ifstream lecture(argv[1]);
-        if (!lecture.good()) {
-            cerr << "error: cannot read file: " << argv[1] << endl;
+    // if (argn == 2) {
+    //     ifstream lecture(argv[1]);
+    //     if (!lecture.good()) {
+    //         cerr << "error: cannot read file: " << argv[1] << endl;
+    //         exit(1);
+    //     }
+    //     in << lecture.rdbuf();
+    // } else {
+    //     cerr << "usage: ifcc path/to/file.c" << endl;
+    //     exit(1);
+    // }
+    int opt;
+    std::string arch = "x86-64";
+    while ((opt = getopt(argn, argv, "m::")) != -1) {
+        switch (opt) {
+        case 'm':
+            arch = optarg;
+            break;
+        default:
+            std::cerr << "usage :" << argv[0] << "[-m arch] file\n";
             exit(1);
         }
-        in << lecture.rdbuf();
-    } else {
-        cerr << "usage: ifcc path/to/file.c" << endl;
+    }
+
+    // Handling mandatory argument
+    if (optind >= argn) {
+        std::cerr << "usage :" << argv[0] << "[-m arch] file\n";
         exit(1);
+    }
+
+    std::string filename = argv[optind];
+
+    stringstream in;
+    ifstream lecture(filename);
+    if (!lecture.good()) {
+        cerr << "error: cannot read file: " << filename << endl;
+        exit(1);
+    }
+    in << lecture.rdbuf();
+
+    std::unique_ptr<IRBaseVisitor> codeGenVisitor;
+    if (arch == "rv64")
+        codeGenVisitor = std::make_unique<RV64Visitor>();
+    else if (arch == "x86-64")
+        codeGenVisitor = std::make_unique<IRx86Visitor>();
+    else {
+        std::cerr << "Unknown architecture '" << arch << "'";
+        exit(0);
     }
 
     ANTLRInputStream input(in.str());
@@ -60,10 +101,9 @@ int main(int argn, const char **argv) {
     IRGenVisitor v1(ir);
     v1.visit(tree); // creer l'IR
 
-    std::cout << ".intel_syntax noprefix\n";
-    IRx86Visitor v2;
+    // std::cout << ".intel_syntax noprefix\n";
     for (const auto &i : ir) {
-        i->visitBlocks(v2);
+        i->visitBlocks(*codeGenVisitor);
     }
     return 0;
 }
