@@ -2,8 +2,12 @@
 
 #include "IRBaseVisitor.h"
 #include "ir.h"
+#include <iostream>
 
 class IRx86Visitor : public IRBaseVisitor {
+public:
+    IRx86Visitor() { std::cout << ".intel_syntax noprefix\n"; }
+
 private:
     virtual void visitAffect(ir::Affect &affect) override;
     virtual void visitAffectConst(ir::AffectConst &effectConst) override;
@@ -16,6 +20,6 @@ private:
     virtual void visitSwitchJump(ir::SwitchJump &jump) override;
     virtual void visitReturn(ir::Return &ret) override;
     virtual void visitCall(ir::Call &call) override;
-    
+
     inline std::string getInstrFromOp(ir::BinOp::BinOpType op);
 };
