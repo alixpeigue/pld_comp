@@ -19,7 +19,6 @@ DESTNAME=$1
 SOURCENAME=$2
 
 riscv64-linux-gnu-gcc $SOURCENAME -o $DESTNAME
->&2 echo "hohoho"
 retcode=$?
 
 # forward exit status of the compiler

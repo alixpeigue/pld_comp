@@ -21,7 +21,7 @@ void UserErrorReporter::report(const std::string &message,
     std::cerr << this->lines[ctx->start->getLine() - 1] << "\n";
     size_t endOfSymbol =
         ctx->stop->getCharPositionInLine() + ctx->stop->getText().size();
-    for (int i = 0; i < endOfSymbol; ++i) {
+    for (uint32_t i = 0; i < endOfSymbol; ++i) {
         if (i < ctx->start->getCharPositionInLine()) {
             std::cerr << " ";
         } else {

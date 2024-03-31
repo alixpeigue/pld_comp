@@ -4,6 +4,7 @@
 #include "ir.h"
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 void RV64Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
@@ -33,7 +34,22 @@ void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     std::cout << "    lw a5, -" << left.second << "(s0)\n";
     std::cout << "    lw a6, -" << right.second << "(s0)\n";
 
-    std::cout << "    " << this->getInstrFromOp(type) << " a5, a5, a6\n";
+    if (type >= ir::BinOp::GT && type <= ir::BinOp::NEQ) {
+        std::ostringstream label;
+        label << ".false_" << this->labelCount;
+        std::ostringstream end;
+        end << ".end_" << this->labelCount;
+        ++labelCount;
+        std::cout << "    " << this->getInstrFromBinOp(type) << " a5, a6, "
+                  << label.str() << "\n";
+        std::cout << "    mv a5, zero\n";
+        std::cout << "    j " << end.str() << "\n";
+        std::cout << label.str() << ":\n";
+        std::cout << "    li a5, 1\n";
+        std::cout << end.str() << ":\n";
+    } else {
+        std::cout << "    " << this->getInstrFromBinOp(type) << " a5, a5, a6\n";
+    }
 
     std::cout << "    sw a5, -" << to.second << "(s0)\n";
 
@@ -42,7 +58,49 @@ void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     // } else if ty
 }
 
-void RV64Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {}
+void RV64Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
+    Scope &scope = unaryop.getBlock().getScope();
+    Variable to = scope.getVariable(unaryop.getTo()).value();
+    Variable from = scope.getVariable(unaryop.getFrom()).value();
+
+    ir::UnaryOp::UnaryOpType type = unaryop.getType();
+
+    std::cout << "    lw a5, -" << from.second << "(s0)\n";
+
+    if (type == ir::UnaryOp::POST_DEC) {
+        std::cout << "    sw a5, -" << to.second << "(s0)\n";
+        std::cout << "    addi a5, a5, -1\n";
+        std::cout << "    sw a5, -" << from.second << "(s0)\n";
+        return;
+    }
+    if (type == ir::UnaryOp::POST_INC) {
+        std::cout << "    sw a5, -" << to.second << "(s0)\n";
+        std::cout << "    addi a5, a5, 1\n";
+        std::cout << "    sw a5, -" << from.second << "(s0)\n";
+        return;
+    }
+
+    switch (unaryop.getType()) {
+    case ir::UnaryOp::NEG:
+        std::cout << "    subw a5, zero, a5\n";
+        break;
+    case ir::UnaryOp::PRE_DEC:
+        std::cout << "    addi a5, a5, -1\n";
+        std::cout << "    sw a5, -" << from.second << "(s0)\n";
+        break;
+    case ir::UnaryOp::PRE_INC:
+        std::cout << "    addi a5, a5, 1\n";
+        std::cout << "    sw a5, -" << from.second << "(s0)\n";
+        break;
+    case ir::UnaryOp::NOT:
+        std::cout << "    seqz a5, a5\n";
+        break;
+    default:
+        break;
+    }
+
+    std::cout << "    sw a5, -" << to.second << "(s0)\n";
+}
 
 void RV64Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     std::cout << bb.getName() << ":\n";
@@ -68,7 +126,17 @@ void RV64Visitor::visitCFG(ir::CFG &cfg) {
     std::cout << "    addi sp, sp, -" << size << "\n";
     std::cout << "    sd ra, 24(sp)\n";
     std::cout << "    sd s0, 16(sp)\n";
-    std::cout << "    addi s0, sp, -" << cfg.getSize() << '\n';
+    std::cout << "    addi s0, sp, -" << size << '\n';
+    if (cfg.getName() == "main") {
+        std::cout << "    mv a5, zero\n";
+        std::cout << "    sw a5, -"
+                  << cfg.getEpilogue()
+                         .getScope()
+                         .getVariable("#return")
+                         .value()
+                         .second
+                  << "(s0)\n";
+    }
 
     for (size_t i = 0; i < cfg.getArgs().size() && i < regs.size(); ++i) {
         std::cout << "    mv a5, " << regs[i] << "\n";
@@ -101,7 +169,18 @@ void RV64Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
     std::cout << "    j " << jump.getThen()->getName() << "\n";
 }
 
-void RV64Visitor::visitSwitchJump(ir::SwitchJump &jump){};
+void RV64Visitor::visitSwitchJump(ir::SwitchJump &jump) {
+    Variable expr = jump.getBlock()
+                        .getScope()
+                        .getVariable(jump.getExpressionTest())
+                        .value();
+    auto caseTests = jump.getCaseTests();
+    for (auto &caseTest : caseTests) {
+        std::cout << "    li a6, " << caseTest.first << "\n";
+        std::cout << "    lw a5, -" << expr.second << "(s0)\n";
+        std::cout << "    beq a5, a6, " << caseTest.second->getName() << "\n";
+    }
+};
 
 void RV64Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
@@ -109,8 +188,7 @@ void RV64Visitor::visitReturn(ir::Return &ret) {
     int size = ret.getBlock().getCFG().getSize() + 16;
     size = ((size + 15) / 16) * 16;
 
-    std::cout << "    sw a5, -" << retVar.second << "(s0)\n";
-    std::cout << "    mv a0, a5\n";
+    std::cout << "    lw a0, -" << retVar.second << "(s0)\n";
     std::cout << "    ld ra, 24(sp)\n";
     std::cout << "    ld s0, 16(sp)\n";
     std::cout << "    addi sp, sp, " << size << "\n";
@@ -138,20 +216,40 @@ void RV64Visitor::visitCall(ir::Call &call) {
     std::cout << "    sw a0, -" << to.second << "(s0)\n";
 }
 
-inline std::string RV64Visitor::getInstrFromOp(ir::BinOp::BinOpType op) {
+inline std::string RV64Visitor::getInstrFromBinOp(ir::BinOp::BinOpType op) {
     switch (op) {
     case ir::BinOp::DIV:
         return "div";
     case ir::BinOp::MOD:
         return "rem";
+    case ir::BinOp::MUL:
+        return "mulw";
     case ir::BinOp::ADD:
         return "addw";
     case ir::BinOp::SUB:
         return "subw";
     case ir::BinOp::SHIFT_L:
-        return "sla";
+        return "sllw";
     case ir::BinOp::SHIFT_R:
-        return "sra";
+        return "sraw";
+    case ir::BinOp::AND_BIN:
+        return "and";
+    case ir::BinOp::OR_BIN:
+        return "or";
+    case ir::BinOp::XOR_BIN:
+        return "xor";
+    case ir::BinOp::GT:
+        return "bgt";
+    case ir::BinOp::LT:
+        return "blt";
+    case ir::BinOp::GTE:
+        return "bge";
+    case ir::BinOp::LTE:
+        return "ble";
+    case ir::BinOp::EQ:
+        return "beq";
+    case ir::BinOp::NEQ:
+        return "bne";
     }
     return "";
 }
