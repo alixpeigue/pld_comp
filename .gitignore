@@ -19,3 +19,6 @@ compile_commands.json
 .vscode/
 a.out
 vgcore*
+
+# Documentation
+doc/

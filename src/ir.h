@@ -22,13 +22,25 @@ class BasicBlock;
 
 /**
  * @brief classe abstraite qui représente une instruction IR
- * 
+ *
  */
 class IRInstr {
     friend BasicBlock;
 
 public:
+    /**
+     * @brief Accepte un visiteur d'IR afin de visiter l'IR de manière
+     * polymorpĥique
+     *
+     * @param visitor
+     */
     virtual void accept(IRBaseVisitor &visitor) = 0;
+
+    /**
+     * @brief Récupérer le BasicBlock dans lequel l'instruction se situe
+     *
+     * @return BasicBlock&
+     */
     BasicBlock &getBlock() { return *block; };
 
 protected:
@@ -37,7 +49,7 @@ protected:
 
 /**
  * @brief Instruction qui déplace vers un autre bloc
- * 
+ *
  */
 class Next : public IRInstr {};
 
@@ -45,7 +57,7 @@ class CFG;
 
 /**
  * @brief bloc de code
- * 
+ *
  */
 class BasicBlock {
     friend CFG;
@@ -55,12 +67,42 @@ public:
         : name(std::move(name)), scope(scope) {}
     void addInstr(std::unique_ptr<IRInstr> instr);
     void accept(IRBaseVisitor &visitor);
+    /**
+     * @brief Renvoie le scope contenant les variables auquel le bloc est
+     * assicoé
+     *
+     * @return Scope&
+     */
     Scope &getScope() { return *scope; }
+
+    /**
+     * @brief Nom du bloc
+     *
+     * @return const std::string&
+     */
     const std::string &getName() const { return name; }
+
+    /**
+     * @brief Renvoie le vecteur d'instructions du bloc par référence cons
+     *
+     * @return const std::vector<std::unique_ptr<IRInstr>>&
+     */
     const std::vector<std::unique_ptr<IRInstr>> &getInstructions() const {
         return instrs;
     }
+
+    /**
+     * @brief Renvoie l'objet représentant la suite du bloc
+     *
+     * @return std::unique_ptr<Next>
+     */
     std::unique_ptr<Next> getNext() { return std::move(next); }
+
+    /**
+     * @brief Définit la fin du bloc
+     *
+     * @param next l'instruction de fin : saut absolu, saut conditionel...
+     */
     void setNext(std::unique_ptr<Next> next);
     CFG &getCFG() { return *cfg; }
 
@@ -74,7 +116,7 @@ protected:
 
 /**
  * @brief Instruction qui déplace toujours vers un autre bloc
- * 
+ *
  */
 class UnconditionalJump : public Next {
 public:
@@ -89,8 +131,9 @@ protected:
 };
 
 /**
- * @brief Instrution qui renvoie vers le bloc d'appel en retournant une valeur
- * 
+ * @brief Instrution qui renvoie vers l'épilogue et place la valeur de retour
+ * dans `#return`
+ *
  */
 class Return : public Next {
 public:
@@ -98,12 +141,19 @@ public:
 };
 
 /**
- * @brief Instruction qui déplace vers un bloc ou un autre
+ * @brief Instruction qui saute vers un bloc ou un autre
  *      en fonction d'une condition
- * 
+ *
  */
 class ConditionalJump : public Next {
 public:
+    /**
+     * @brief Construit le saut conditionel
+     *
+     * @param condition la variable contenant la condition du saut
+     * @param thenBlock le bloc où aller si la condition est vraie
+     * @param elseBlock le bloc où aller si la condition est fausse
+     */
     ConditionalJump(std::string condition, BasicBlock *thenBlock,
                     BasicBlock *elseBlock)
         : condition(std::move(condition)), thenBlock(thenBlock),
@@ -121,11 +171,19 @@ protected:
 };
 
 /**
- * @brief Dans le cas d'un switch, Instruction qui déplace vers le bloc approprié
- * 
+ * @brief Dans le cas d'un switch, Instruction qui saute vers le bloc
+ * approprié
+ *
  */
 class SwitchJump : public Next {
 public:
+    /**
+     * @brief Construit un SwitchJump vers les blocs appropriés
+     *
+     * @param expressionTest la variable devant être testée
+     * @param caseTests un vecteur de pairs, chaque paire représente un cas du
+     * switch sous la forme (valeur, block)
+     */
     SwitchJump(std::string expressionTest,
                std::vector<std::pair<std::string, BasicBlock *>> caseTests)
         : expressionTest(std::move(expressionTest)),
@@ -145,26 +203,76 @@ protected:
 /**
  * @brief Control Flow Graph qui représente une fonction sous la forme
  *        d'un arbre de bloc
- * 
+ *
  */
 class CFG {
 public:
+    /**
+     * @brief Construit un Control Flow Graph
+     *
+     * @param name nom de la fonction représentée par le CFG
+     * @param returnType type de retour de la fonction représentée par le CFG
+     */
     CFG(std::string name, VarType returnType)
+<<<<<<< HEAD
         : returnType(returnType), name(std::move(name)) {}
+=======
+        : name(std::move(name)), returnType(returnType) {}
+
+    /**
+     * @brief Ajoute un bloc dans le CFG. Prend l'ownership du bloc via le
+     * unique_ptr
+     *
+     * @param block le bloc à ajouter dans le CFG
+     */
+>>>>>>> b7f852e (add doxygen config + make doc in makefile + add doc for ir)
     void addBlock(std::unique_ptr<BasicBlock> block);
+
+    /**
+     * @brief Ajoute un scope dans le CFG. Prend l'ownership du scope via le
+     * unique_ptr
+     *
+     * @param scope le scope à ajouter dans le CFG
+     */
     void addScope(std::unique_ptr<Scope> scope);
+
+    /**
+     * @brief Place le bloc passé comme épilogue du bloc. L'épilogue est un bloc
+     * normal et doit donc être ajouté au CFG afin d'être possédé par le CFG.
+     *
+     * @param epilogue le bloc épilogue
+     */
     void setEpilogue(BasicBlock *epilogue) { this->epilogue = epilogue; }
     BasicBlock &getEpilogue() { return *epilogue; }
 
+    /**
+     * @brief Accepte un visiteur d'IR pour visiter de CFG.
+     *
+     * @param visitor le visiteur d'IR
+     */
     void visitBlocks(IRBaseVisitor &visitor);
     const std::string &getName() { return name; }
     const std::vector<std::unique_ptr<BasicBlock>> &getBlocks() const {
         return blocks;
     }
     uint32_t getSize();
+
+    /**
+     * @brief Ajoute un argument à la fonction représentée par le cfg
+     *
+     * @param name le nom du paramètre
+     * @param type le type du paramètre
+     */
     void addArg(const std::string &name, VarType type) {
         args.push_back(std::make_pair(name, type));
     }
+
+    /**
+     * @brief Retourne tous les arguments pric par la fonction représentée par
+     * le cfg sous forme d'un vecteur de pairs (nom, type)
+     *
+     * @return const std::vector<std::pair<std::string, VarType>>&
+     */
     const std::vector<std::pair<std::string, VarType>> &getArgs() const {
         return args;
     }
@@ -183,10 +291,14 @@ using Prog = std::vector<std::unique_ptr<CFG>>;
 
 /**
  * @brief Instruction qui déplace une valeur d'une case mémoire vers une autre
- * 
+ *
  */
 class Affect : public IRInstr {
 public:
+    /**
+     * @brief Crée un objet Affect représentant un affectation de la forme `to =
+     * from`
+     */
     Affect(std::string to, std::string from)
         : to(std::move(to)), from(std::move(from)){};
     virtual void accept(IRBaseVisitor &visitor) override;
@@ -200,10 +312,14 @@ protected:
 
 /**
  * @brief Instruction qui déplace une valeur constante vers un espace mémoire
- * 
+ *
  */
 class AffectConst : public IRInstr {
 public:
+    /**
+     * @brief CCrée un objet AffectConst représentent une affectation d'une
+     * constante à une variable de la forme `to = value`
+     */
     AffectConst(std::string left, int value)
         : to(std::move(left)), value(value){};
     virtual void accept(IRBaseVisitor &visitor) override;
@@ -217,12 +333,16 @@ protected:
 
 /**
  * @brief Instruction qui effectue une opération a une opérande
- * 
+ *
  */
 class UnaryOp : public IRInstr {
 public:
     enum UnaryOpType { NEG, NOT, PRE_INC, PRE_DEC, POST_INC, POST_DEC };
 
+    /**
+     * @brief Crée un objet représentant une opération unaire de la forme `to =
+     * type from` Par exemple, si type est NOT, cela représente `to = !from`.
+     */
     UnaryOp(UnaryOpType type, std::string to, std::string from)
         : type(type), to(to), from(from) {}
 
@@ -239,7 +359,7 @@ protected:
 
 /**
  * @brief Instruction qui effectue une opération a deux opérandes
- * 
+ *
  */
 class BinOp : public IRInstr {
 public:
@@ -262,8 +382,12 @@ public:
         XOR_BIN
     };
 
-    BinOp(BinOpType type, std::string to, std::string from, std::string right)
-        : type(type), to(to), left(from), right(right) {}
+    /**
+     * @brief Construit une opération binaire représentant une opéation du type
+     * `to = left op right`
+     */
+    BinOp(BinOpType op, std::string to, std::string left, std::string right)
+        : type(op), to(to), left(left), right(right) {}
     const std::string &getTo() const { return to; }
     const std::string &getLeft() const { return left; }
     const std::string &getRight() const { return right; }
@@ -279,7 +403,7 @@ protected:
 
 /**
  * @brief Instruction qui fait appel a une autre fonction
- * 
+ *
  */
 class Call : public IRInstr {
 public:

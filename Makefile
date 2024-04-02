@@ -13,7 +13,7 @@ LDFLAGS=-g
 SRC-DIR = src
 OUT-DIR = build
 
-.PHONY: check gui clean
+.PHONY: check gui clean doc
 
 default: all
 all: ifcc
@@ -85,3 +85,8 @@ check-x86: all
 	python3 tests/ifcc-test.py --ifcc-wrapper tests/ifcc-wrapper-x86.sh --gcc-wrapper tests/gcc-wrapper-x86.sh --as-wrapper tests/as-wrapper-x86.sh --exec-wrapper tests/exec-wrapper-x86.sh tests/testfiles
 check-rv64: all
 	python3 tests/ifcc-test.py --ifcc-wrapper tests/ifcc-wrapper-rv64.sh --gcc-wrapper tests/gcc-wrapper-rv64.sh --as-wrapper tests/as-wrapper-rv64.sh --exec-wrapper tests/exec-wrapper-rv64.sh tests/testfiles
+
+#########################################
+# generate doxygen documentation
+doc:
+	doxygen doxygen-config
