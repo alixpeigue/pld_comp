@@ -8,28 +8,34 @@ void ConstantPropagationVisitor::visitCFG(ir::CFG &cfg) {
             this->instr_index = i;
             block->getInstructions()[i]->accept(*this);
         }
+        // we do not propagate beyond blocks
         constants.clear();
     }
 }
 
 void ConstantPropagationVisitor::visitAffectConst(ir::AffectConst &affect) {
+    // after that, we know that to = value
     this->constants[affect.getTo()] = affect.getValue();
 }
 
 void ConstantPropagationVisitor::visitAffect(ir::Affect &affect) {
     if (this->constants.find(affect.getFrom()) != this->constants.end()) {
+        // if we have a value for "from", we can replace the Affect by an AffectConst
+        // we now also have a value for "to"
         int value = this->constants.at(affect.getFrom());
         this->constants[affect.getTo()] = value;
         ir::IRInstr *affectConst = new ir::AffectConst(affect.getTo(), value);
         affectConst->setBlock(&affect.getBlock());
         affectConst->getBlock().replaceInstr(instr_index, affectConst);
     } else {
+        // if we don't have a value, it kills any previously know falue for "to"
         constants.erase(affect.getTo());
     }
 }
 
 void ConstantPropagationVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
     if (this->constants.find(unaryOp.getFrom()) != this->constants.end()) {
+        // if we know the value, we can calculate the result
         int value = this->constants.at(unaryOp.getFrom());
 
         switch (unaryOp.getType()) {
@@ -70,11 +76,13 @@ void ConstantPropagationVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
         unaryOpConst->setBlock(&unaryOp.getBlock());
         unaryOpConst->getBlock().replaceInstr(instr_index, unaryOpConst);
     } else {
+        // if we don't have a value, it kills any previously know falue for "to"
         constants.erase(unaryOp.getTo());
     }
 }
 
 void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
+    // we propagate, compute and/or simplify expressions
     if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
         this->constants.find(binOp.getRight()) != this->constants.end()) {
         int value = this->constants.at(binOp.getLeft());
@@ -191,6 +199,7 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         instr->setBlock(&binOp.getBlock());
         instr->getBlock().replaceInstr(instr_index, instr);
     } else {
+        // if we don't have a value, it kills any previously know falue for "to"
         constants.erase(binOp.getTo());
     }
 }
