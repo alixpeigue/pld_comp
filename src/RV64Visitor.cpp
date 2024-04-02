@@ -37,31 +37,31 @@ void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     switch (type) {
     case ir::BinOp::GT:
         std::cout << "    sgt a5, a5, a6\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     case ir::BinOp::GTE:
         std::cout << "    slt a5, a5, a6\n";
         std::cout << "    seqz a5, a5\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     case ir::BinOp::LT:
         std::cout << "    slt a5, a5, a6\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     case ir::BinOp::LTE:
         std::cout << "    sgt a5, a5, a6\n";
         std::cout << "    seqz a5, a5\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     case ir::BinOp::EQ:
         std::cout << "    sub a5, a5, a6\n";
         std::cout << "    seqz a5, a5\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     case ir::BinOp::NEQ:
         std::cout << "    sub a5, a5, a6\n";
         std::cout << "    snez a5, a5\n";
-        std::cout << "    andi a5, a5, 1\n";
+        // std::cout << "    andi a5, a5, 1\n";
         break;
     default:
         std::cout << "    " << this->getInstrFromBinOp(type) << " a5, a5, a6\n";
