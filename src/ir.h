@@ -1,3 +1,11 @@
+/**
+ * @file ir.h
+ * @author H4231
+ * @brief Définition ddu namespace ir qui contient les classes nécessaires pour
+ *        le développement de l'IR
+ * @date 2024-04-02
+ */
+
 #pragma once
 
 #include "Scope.h"
@@ -12,6 +20,10 @@ namespace ir {
 
 class BasicBlock;
 
+/**
+ * @brief classe abstraite qui représente une instruction IR
+ * 
+ */
 class IRInstr {
     friend BasicBlock;
 
@@ -23,10 +35,18 @@ protected:
     BasicBlock *block;
 };
 
+/**
+ * @brief Instruction qui déplace vers un autre bloc
+ * 
+ */
 class Next : public IRInstr {};
 
 class CFG;
 
+/**
+ * @brief bloc de code
+ * 
+ */
 class BasicBlock {
     friend CFG;
 
@@ -52,6 +72,10 @@ protected:
     CFG *cfg;
 };
 
+/**
+ * @brief Instruction qui déplace toujours vers un autre bloc
+ * 
+ */
 class UnconditionalJump : public Next {
 public:
     UnconditionalJump(BasicBlock *to) : to(to) {}
@@ -64,11 +88,20 @@ protected:
     BasicBlock *to;
 };
 
+/**
+ * @brief Instrution qui renvoie vers le bloc d'appel en retournant une valeur
+ * 
+ */
 class Return : public Next {
 public:
     virtual void accept(IRBaseVisitor &visitor) override;
 };
 
+/**
+ * @brief Instruction qui déplace vers un bloc ou un autre
+ *      en fonction d'une condition
+ * 
+ */
 class ConditionalJump : public Next {
 public:
     ConditionalJump(std::string condition, BasicBlock *thenBlock,
@@ -87,6 +120,10 @@ protected:
     BasicBlock *elseBlock;
 };
 
+/**
+ * @brief Dans le cas d'un switch, Instruction qui déplace vers le bloc approprié
+ * 
+ */
 class SwitchJump : public Next {
 public:
     SwitchJump(std::string expressionTest,
@@ -105,6 +142,11 @@ protected:
     std::vector<std::pair<std::string, BasicBlock *>> caseTests;
 };
 
+/**
+ * @brief Control Flow Graph qui représente une fonction sous la forme
+ *        d'un arbre de bloc
+ * 
+ */
 class CFG {
 public:
     CFG(std::string name, VarType returnType)
@@ -139,6 +181,10 @@ protected:
 
 using Prog = std::vector<std::unique_ptr<CFG>>;
 
+/**
+ * @brief Instruction qui déplace une valeur d'une case mémoire vers une autre
+ * 
+ */
 class Affect : public IRInstr {
 public:
     Affect(std::string to, std::string from)
@@ -152,6 +198,10 @@ protected:
     std::string from;
 };
 
+/**
+ * @brief Instruction qui déplace une valeur constante vers un espace mémoire
+ * 
+ */
 class AffectConst : public IRInstr {
 public:
     AffectConst(std::string left, int value)
@@ -165,6 +215,10 @@ protected:
     int value;
 };
 
+/**
+ * @brief Instruction qui effectue une opération a une opérande
+ * 
+ */
 class UnaryOp : public IRInstr {
 public:
     enum UnaryOpType { NEG, NOT, PRE_INC, PRE_DEC, POST_INC, POST_DEC };
@@ -183,6 +237,10 @@ protected:
     std::string from;
 };
 
+/**
+ * @brief Instruction qui effectue une opération a deux opérandes
+ * 
+ */
 class BinOp : public IRInstr {
 public:
     enum BinOpType {
@@ -219,6 +277,10 @@ protected:
     std::string right;
 };
 
+/**
+ * @brief Instruction qui fait appel a une autre fonction
+ * 
+ */
 class Call : public IRInstr {
 public:
     Call(const std::string &func_name, const std::string &ret)

@@ -1,20 +1,29 @@
+/**
+ * @file ir.cpp
+ * @author H4231
+ * @brief Définition ddu namespace ir qui contient les classes nécessaires pour
+ *        le développement de l'IR
+ * @date 2024-04-02
+ * 
+ */
+
 #include "IRBaseVisitor.h"
 #include "ir.h"
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
 
+/**
+ * @brief ajouté une instruction IR au bloc
+ * 
+ * @param instr l'instruction IR a ajouté
+ */
 void ir::BasicBlock::addInstr(std::unique_ptr<IRInstr> instr) {
     instr->block = this;
     this->instrs.push_back(std::move(instr));
 }
 
 void ir::BasicBlock::accept(IRBaseVisitor &visitor) {
-    // visitor.visitEnterBlock(*this);
-    // for (auto &instr : this->instrs) {
-    //     instr->accept(visitor);
-    // }
-    // visitor.visitLeaveBlock(*this);
     visitor.visitBasicBlock(*this);
 }
 
@@ -23,32 +32,39 @@ void ir::BasicBlock::setNext(std::unique_ptr<ir::Next> next) {
     this->next = std::move(next);
 }
 
+/**
+ * @brief ajoute un bloc au CFG
+ * 
+ * @param block le bloc ajouté
+ */
 void ir::CFG::addBlock(std::unique_ptr<BasicBlock> block) {
     block->cfg = this;
     this->blocks.push_back(std::move(block));
 }
 
-void ir::CFG::addScope(std::unique_ptr<Scope> block) {
-    // block->cfg = this;
-    this->scopes.push_back(std::move(block));
+/**
+ * @brief ajoute un scope au CGF
+ * 
+ * @param scope Le scope a ajouté
+ */
+void ir::CFG::addScope(std::unique_ptr<Scope> scope) {
+    this->scopes.push_back(std::move(scope));
 }
 
 void ir::CFG::visitBlocks(IRBaseVisitor &visitor) {
-    // visitor.visitPrelude(*this);
-    // for (auto &block : blocks) {
-    //     block->accept(visitor);
-    // }
-    // visitor.visitEpilogue(*this);
     visitor.visitCFG(*this);
 }
 
+/**
+ * @brief Retourne la taille totale du CFG
+ * 
+ * @return la taille du CFG
+ */
 uint32_t ir::CFG::getSize() {
     uint32_t size = 0;
-    
     for (const auto &scope: scopes) {
         size = std::max(size, scope->getSize());
     }
-
     return size;
 }
 
