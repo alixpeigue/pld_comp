@@ -3,7 +3,6 @@
  * @author H4231
  * @brief Visite les noeuds du programme converti en AST grace à antlr4 et creer une IR
  * @date 2024-04-02
- * 
  */
 
 #include "CustomExceptions.h"
@@ -551,10 +550,11 @@ antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
 }
 
 /**
- * @brief Visite une variable 
+ * @brief Visite une expression de type affectation 
+ *        a = b, a+=b, etc
  * 
  * @param ctx contexte antlr4 du noeud
- * @return le nom de la varibale
+ * @return le nom de la varibale du resultat
  */
 antlrcpp::Any IRGenVisitor::visitAffect(
     ifccParser::AffectContext *ctx) {                               // a op b
@@ -599,11 +599,22 @@ antlrcpp::Any IRGenVisitor::visitAffect(
     return to;
 }
 
+/**
+ * @brief Visite le contenue des parenthèses
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitParen(ifccParser::ParenContext *ctx) {
-    // Visit the expression inside the parentheses.
     return visit(ctx->expression());
 }
 
+/**
+ * @brief Visite une expression de multiplication, division ou modulo
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitMult(ifccParser::MultContext *ctx) {
     // Visit the left and right expressions.
     std::string left = visit(ctx->expression(0));
@@ -629,6 +640,12 @@ antlrcpp::Any IRGenVisitor::visitMult(ifccParser::MultContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression d'addition ou de soustraction
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
     // Visit the left and right expressions.
     std::string left = visit(ctx->expression(0));
@@ -651,6 +668,13 @@ antlrcpp::Any IRGenVisitor::visitAdd(ifccParser::AddContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de plus ou moins unaire
+ *          -a, +a
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     // Visit the expression.
     std::string from = visit(ctx->expression());
@@ -674,6 +698,13 @@ antlrcpp::Any IRGenVisitor::visitUnaryAdd(ifccParser::UnaryAddContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de décalage binaire
+ *          a << exp, a >> exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -693,6 +724,13 @@ antlrcpp::Any IRGenVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de comparaison
+ *         exp >= exp, exp < exp, etc
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitCompare(ifccParser::CompareContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -718,6 +756,13 @@ antlrcpp::Any IRGenVisitor::visitCompare(ifccParser::CompareContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression d'égalité
+ *         exp != exp, exp == exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -737,6 +782,13 @@ antlrcpp::Any IRGenVisitor::visitCompareEq(ifccParser::CompareEqContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression d'ou exclusif
+ *         exp ^ exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -751,6 +803,13 @@ antlrcpp::Any IRGenVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression d'ou
+ *         exp | exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -765,6 +824,13 @@ antlrcpp::Any IRGenVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de et
+ *         exp & exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
     std::string left = visit(ctx->expression(0));
     std::string right = visit(ctx->expression(1));
@@ -779,6 +845,13 @@ antlrcpp::Any IRGenVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de et logique paresseux
+ *          exp && exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     /*
         b1 && b2
@@ -846,6 +919,13 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     return tmp;
 }
 
+/**
+ * @brief Visite une expression de et logique paresseux
+ *          exp || exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     /*
         b1 || b2
@@ -915,6 +995,13 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     return tmp;
 }
 
+/**
+ * @brief Visite une expression de pré-incrémentation
+ *          ++exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     auto instruction =
@@ -923,6 +1010,13 @@ antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
     return from;
 }
 
+/**
+ * @brief Visite une expression de pré-décrémentation
+ *          --exp
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     auto instruction =
@@ -931,6 +1025,13 @@ antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
     return from;
 }
 
+/**
+ * @brief Visite une expression de post-incrémentation
+ *          exp++
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     ++counterTempVariables;
@@ -942,6 +1043,13 @@ antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
     return to;
 }
 
+/**
+ * @brief Visite une expression de pré-décrementation
+ *          exp--
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie le nom de la varibale qui contient le resultat de l'expression
+ */
 antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
     std::string from = ctx->VARIABLE()->getText();
     ++counterTempVariables;
@@ -954,6 +1062,13 @@ antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
 }
 
 /* Creer le block et l'ajoute au CFG actuel */
+
+/**
+ * @brief Construit un bloc et l'ajoute au CFG actuel
+ * 
+ * @param name le nom du bloc
+ * @return le bloc qui a été créé
+ */
 ir::BasicBlock *IRGenVisitor::createBlock(const std::string &name) {
     std::string n = name + std::to_string(this->counterBlocks);
     ++counterBlocks;

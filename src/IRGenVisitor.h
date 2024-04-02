@@ -1,3 +1,10 @@
+/**
+ * @file IRBaseVisitor.h
+ * @author H4231
+ * @brief Visite les noeuds du programme converti en AST grace à antlr4 et creer une IR
+ * @date 2024-04-02
+ */
+
 #pragma once
 
 #include "antlr4-runtime.h"
