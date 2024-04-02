@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <sstream>
 
 #include "IRGenVisitor.h"
@@ -15,6 +16,7 @@
 #include "ifccParser.h"
 
 #include "IRBaseVisitor.h"
+#include "Options.h"
 #include "Scope.h"
 #include "ir.h"
 
@@ -25,54 +27,25 @@ using namespace std;
 
 int main(int argn, char **argv) {
 
-    // Gestion de l'input
-    // if (argn == 2) {
-    //     ifstream lecture(argv[1]);
-    //     if (!lecture.good()) {
-    //         cerr << "error: cannot read file: " << argv[1] << endl;
-    //         exit(1);
-    //     }
-    //     in << lecture.rdbuf();
-    // } else {
-    //     cerr << "usage: ifcc path/to/file.c" << endl;
-    //     exit(1);
-    // }
-    int opt;
-    std::string arch = "x86-64";
-    while ((opt = getopt(argn, argv, "t::")) != -1) {
-        switch (opt) {
-        case 't':
-            arch = optarg;
-            break;
-        default:
-            std::cerr << "usage :" << argv[0] << "[-t target] file\n";
-            exit(1);
-        }
-    }
-
-    // Handling mandatory argument
-    if (optind >= argn) {
-        std::cerr << "usage :" << argv[0] << "[-t target] file\n";
-        exit(1);
-    }
-
-    std::string filename = argv[optind];
+    Options opt = Options::fromArgs(argn, argv);
 
     stringstream in;
-    ifstream lecture(filename);
+    ifstream lecture(opt.in);
     if (!lecture.good()) {
-        cerr << "error: cannot read file: " << filename << endl;
+        cerr << "error: cannot read file: " << opt.in << endl;
         exit(1);
     }
     in << lecture.rdbuf();
 
+    ofstream ofs(opt.out, ofstream::out);
+
     std::unique_ptr<IRBaseVisitor> codeGenVisitor;
-    if (arch == "rv64")
-        codeGenVisitor = std::make_unique<RV64Visitor>();
-    else if (arch == "x86-64")
+    if (opt.target == "rv64")
+        codeGenVisitor = std::make_unique<RV64Visitor>(ofs);
+    else if (opt.target == "x86-64")
         codeGenVisitor = std::make_unique<IRx86Visitor>();
     else {
-        std::cerr << "Unknown architecture '" << arch << "'";
+        std::cerr << "Unknown architecture '" << opt.target << "'";
         exit(0);
     }
 

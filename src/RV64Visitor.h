@@ -1,7 +1,11 @@
 #pragma once
 
 #include "IRBaseVisitor.h"
+#include <ostream>
 class RV64Visitor : public IRBaseVisitor {
+public:
+    RV64Visitor(std::ostream &os) : os(os) {}
+
 private:
     virtual void visitAffect(ir::Affect &affect) override;
     virtual void visitAffectConst(ir::AffectConst &effectConst) override;
@@ -18,4 +22,6 @@ private:
     inline std::string getInstrFromBinOp(ir::BinOp::BinOpType op);
 
     int labelCount = 0;
+
+    std::ostream &os;
 };
