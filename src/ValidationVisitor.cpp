@@ -216,6 +216,11 @@ antlrcpp::Any ValidationVisitor::visitFunction(
     this->scopes.push_back(Scope());
     std::string funcName = ctx->VARIABLE(0)->getText();
 
+    if (this->functions.find(funcName) != this->functions.end()) {
+        this->reporter.report("function was already declared", ctx);
+        exit(1);
+    }
+
     Function function;
     function.reserve(ctx->type().size());
 
@@ -261,7 +266,7 @@ antlrcpp::Any ValidationVisitor::visitDeclaration(
     this->currentType = ctx->type()->getText();
 
     if (this->currentType == VarType::VOID) {
-        this->reporter.report("Illegal type 'void' for variable", ctx->type());
+        this->reporter.report("illegal type 'void' for variable", ctx->type());
         exit(1);
     }
 
@@ -288,6 +293,12 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     this->visitChildren(ctx);
 
     std::string varName = ctx->VARIABLE()->getText();
+    
+    if (this->scopes.back().find(varName) != this->scopes.back().end()) {
+        this->reporter.report("variable was already declared", ctx);
+        exit(1);
+    }
+
     this->scopes.back()[varName] =
         std::make_pair(this->currentType, VarState::DECLARED);
     return 0;
