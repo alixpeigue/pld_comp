@@ -43,7 +43,7 @@ int main(int argn, char **argv) {
     if (opt.target == "rv64")
         codeGenVisitor = std::make_unique<RV64Visitor>(ofs);
     else if (opt.target == "x86-64")
-        codeGenVisitor = std::make_unique<IRx86Visitor>();
+        codeGenVisitor = std::make_unique<IRx86Visitor>(ofs);
     else {
         std::cerr << "Unknown architecture '" << opt.target << "'";
         exit(0);
