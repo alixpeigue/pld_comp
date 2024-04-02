@@ -1,3 +1,10 @@
+/**
+ * @file IRBaseVisitor.h
+ * @author H4231
+ * @brief Un visiteur abstrait pour l'IR
+ * @date 2024-04-02
+ */
+
 #pragma once
 
 #include "ir.h"
