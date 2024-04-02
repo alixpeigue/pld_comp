@@ -106,6 +106,13 @@ public:
      */
     void setNext(std::unique_ptr<Next> next);
     CFG &getCFG() { return *cfg; }
+    void addInstr(size_t index, std::unique_ptr<IRInstr> instr) {
+        this->instrs.emplace(this->instrs.begin() + index + 1,
+                             std::move(instr));
+    }
+    void replaceInstr(size_t index, IRInstr *instr) {
+        this->instrs[index].reset(instr);
+    }
 
 protected:
     std::string name;

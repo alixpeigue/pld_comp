@@ -13,5 +13,5 @@ class ConstantPropagationVisitor : public IRBaseVisitor {
 
 protected:
     std::unordered_map<std::string, int> constants;
-    std::unique_ptr<ir::IRInstr> *instr;
+    size_t instr_index;
 };
