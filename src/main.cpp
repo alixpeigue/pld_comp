@@ -39,20 +39,20 @@ int main(int argn, char **argv) {
     // }
     int opt;
     std::string arch = "x86-64";
-    while ((opt = getopt(argn, argv, "m::")) != -1) {
+    while ((opt = getopt(argn, argv, "t::")) != -1) {
         switch (opt) {
-        case 'm':
+        case 't':
             arch = optarg;
             break;
         default:
-            std::cerr << "usage :" << argv[0] << "[-m arch] file\n";
+            std::cerr << "usage :" << argv[0] << "[-t target] file\n";
             exit(1);
         }
     }
 
     // Handling mandatory argument
     if (optind >= argn) {
-        std::cerr << "usage :" << argv[0] << "[-m arch] file\n";
+        std::cerr << "usage :" << argv[0] << "[-t target] file\n";
         exit(1);
     }
 

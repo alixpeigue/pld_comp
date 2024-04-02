@@ -34,28 +34,40 @@ void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     std::cout << "    lw a5, -" << left.second << "(s0)\n";
     std::cout << "    lw a6, -" << right.second << "(s0)\n";
 
-    if (type >= ir::BinOp::GT && type <= ir::BinOp::NEQ) {
-        std::ostringstream label;
-        label << ".false_" << this->labelCount;
-        std::ostringstream end;
-        end << ".end_" << this->labelCount;
-        ++labelCount;
-        std::cout << "    " << this->getInstrFromBinOp(type) << " a5, a6, "
-                  << label.str() << "\n";
-        std::cout << "    mv a5, zero\n";
-        std::cout << "    j " << end.str() << "\n";
-        std::cout << label.str() << ":\n";
-        std::cout << "    li a5, 1\n";
-        std::cout << end.str() << ":\n";
-    } else {
+    switch (type) {
+    case ir::BinOp::GT:
+        std::cout << "    sgt a5, a5, a6\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    case ir::BinOp::GTE:
+        std::cout << "    slt a5, a5, a6\n";
+        std::cout << "    seqz a5, a5\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    case ir::BinOp::LT:
+        std::cout << "    slt a5, a5, a6\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    case ir::BinOp::LTE:
+        std::cout << "    sgt a5, a5, a6\n";
+        std::cout << "    seqz a5, a5\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    case ir::BinOp::EQ:
+        std::cout << "    sub a5, a5, a6\n";
+        std::cout << "    seqz a5, a5\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    case ir::BinOp::NEQ:
+        std::cout << "    sub a5, a5, a6\n";
+        std::cout << "    snez a5, a5\n";
+        std::cout << "    andi a5, a5, 1\n";
+        break;
+    default:
         std::cout << "    " << this->getInstrFromBinOp(type) << " a5, a5, a6\n";
     }
 
     std::cout << "    sw a5, -" << to.second << "(s0)\n";
-
-    // if(type == ir::BinOp::DIV) {
-    //     std::cout << "    div a5, a5, a6";
-    // } else if ty
 }
 
 void RV64Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
@@ -238,18 +250,7 @@ inline std::string RV64Visitor::getInstrFromBinOp(ir::BinOp::BinOpType op) {
         return "or";
     case ir::BinOp::XOR_BIN:
         return "xor";
-    case ir::BinOp::GT:
-        return "bgt";
-    case ir::BinOp::LT:
-        return "blt";
-    case ir::BinOp::GTE:
-        return "bge";
-    case ir::BinOp::LTE:
-        return "ble";
-    case ir::BinOp::EQ:
-        return "beq";
-    case ir::BinOp::NEQ:
-        return "bne";
+    default:
+        return "";
     }
-    return "";
 }
