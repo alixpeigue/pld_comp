@@ -147,8 +147,8 @@ void RV64Visitor::visitCFG(ir::CFG &cfg) {
     }
 
     for (size_t i = 0; i < cfg.getArgs().size() && i < regs.size(); ++i) {
-        os << "    mv a5, " << regs[i] << "\n";
-        os << "    sw a5, -"
+        os << "    mv t1, " << regs[i] << "\n";
+        os << "    sw t1, -"
            << cfg.getBlocks()[0]
                   ->getScope()
                   .getVariable(cfg.getArgs()[i].first)
