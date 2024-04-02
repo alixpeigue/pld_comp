@@ -38,6 +38,8 @@ void ConstantPropagationVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
         case ir::UnaryOp::NOT:
             value = !value;
             break;
+        default:
+            return;
         }
 
         this->constants[unaryOp.getTo()] = value;
@@ -71,6 +73,8 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         case ir::BinOp::MOD:
             value %= rightValue;
             break;
+        default:
+            return;
         }
 
         this->constants[binOp.getTo()] = value;

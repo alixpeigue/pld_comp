@@ -23,6 +23,7 @@ public:
     virtual void visitCFG(ir::CFG &cfg) {}
     virtual void visitUnconditionalJump(ir::UnconditionalJump &jump) {}
     virtual void visitConditionalJump(ir::ConditionalJump &jump) {}
+    virtual void visitSwitchJump(ir::SwitchJump &jump) {}
     virtual void visitReturn(ir::Return &jump) {}
     virtual void visitCall(ir::Call &call) {}
 };
