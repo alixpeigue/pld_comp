@@ -1,3 +1,11 @@
+/**
+ * @file IRGenVisitor.cpp
+ * @author H4231
+ * @brief Visite les noeuds du programme converti en AST grace à antlr4 et creer une IR
+ * @date 2024-04-02
+ * 
+ */
+
 #include "CustomExceptions.h"
 #include "IRGenVisitor.h"
 #include "Scope.h"
@@ -7,6 +15,13 @@
 #include <memory>
 #include <string>
 
+/**
+ * @brief Visite le premier noeud de l'arbre de synthaxe
+ *        Arrete le programme en cas d'erreur
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     try {
         visitChildren(ctx);
@@ -26,6 +41,12 @@ antlrcpp::Any IRGenVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     return 0;
 }
 
+/**
+ * @brief Visite toutes les fonctions du programme
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
 
     for (const auto &func : ctx->function()) {
@@ -34,6 +55,12 @@ antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
     return 0;
 }
 
+/**
+ * @brief Visite un block { ... }
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     // Create a new block, new scope, and set up an unconditional jump.
     Scope &currentScope = this->currentBlock->getScope();
@@ -67,7 +94,13 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     return 0;
 }
 
-// Visit the condition expression of the if statement.
+/**
+ * @brief Visite les blocs qui constituent le if 
+ *        if ( ... ) { ... } else { ... }
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // Extract the condition expression for the if statement.
     std::string condition = this->visit(ctx->expression());
@@ -123,7 +156,13 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     return 0;
 }
 
-// Visits a while loop statement.
+/**
+ * @brief Visite le bloc du while
+ *        while ( ... ) { ... }
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     ifccParser::While_stmtContext *ctx) {
 
@@ -168,7 +207,13 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     return 0;
 }
 
-// Visits a do-while loop statement.
+/**
+ * @brief Visite le bloc d'un do () while
+ *        do ( ... ) while { ... }
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     ifccParser::Do_while_stmtContext *ctx) {
 
@@ -215,6 +260,12 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     return 0;
 }
 
+/**
+ * @brief Visite le bloc d'un switch
+ * 
+ * @param ctx 
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any IRGenVisitor::visitSwitch_stmt(
     ifccParser::Switch_stmtContext *ctx) {
     // Retrieve the current scope.
@@ -286,18 +337,38 @@ antlrcpp::Any IRGenVisitor::visitSwitch_stmt(
     return 0;
 }
 
+/**
+ * @brief Visite un continue;
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitContinue_stmt(
     ifccParser::Continue_stmtContext *ctx) {
     throw ContinueException();
     return 0;
 }
 
+
+/**
+ * @brief Visite un break;
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitBreak_stmt(
     ifccParser::Break_stmtContext *ctx) {
     throw BreakException();
     return 0;
 }
 
+/**
+ * @brief Visite un appel à une fonction
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return Renvoie le nom de la variable qui contient la valeur de retour de
+ *         la fonction
+ */
 antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
     std::string tempVarName = "#" + std::to_string(this->counterTempVariables);
     auto instruction =
@@ -314,6 +385,12 @@ antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
     return tempVarName;
 }
 
+/**
+ * @brief Visite le bloc d'une fonction
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return retourne le nom de la fonction
+ */
 antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
     std::string funcName = ctx->VARIABLE(0)->getText();
 
@@ -374,6 +451,12 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
     return funcName;
 }
 
+/**
+ * @brief Visite le mot clé return ... ;
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return retourne le nom de la fonction
+ */
 antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     ifccParser::Return_stmtContext *ctx) {
     if (ctx->expression()) {
@@ -392,6 +475,13 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     return 0;
 }
 
+/**
+ * @brief visite les déclarations de la forme var = exp
+ *        ajoute la variable à la table des symboles 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return renvoie toujours 0
+ */
 antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
     // Add a variable declaration to the current block's scope.
@@ -408,6 +498,13 @@ antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     return 0;
 }
 
+/**
+ * @brief Visite un nombre entier, Creer une variable temporaire et l'ajoute
+ *        à la table de symbole 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return le nom de la varibale créé
+ */
 antlrcpp::Any IRGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     // Extract the integer value from the context.
     int value = stoi(ctx->INT_CONST()->getText());
@@ -424,6 +521,13 @@ antlrcpp::Any IRGenVisitor::visitIntConst(ifccParser::IntConstContext *ctx) {
     return variableName;
 }
 
+/**
+ * @brief Visite un caractère entre cotes. Creer une variable temporaire et
+ *        l'ajoute à la table de symbole 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return le nom de la varibale créé
+ */
 antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     // Extract the character value from the context.
     int value = ctx->CHAR_CONST()->getText()[1];
@@ -440,11 +544,18 @@ antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
     return variableName;
 }
 
+
 antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
     // Return the name of the variable.
     return ctx->VARIABLE()->getText();
 }
 
+/**
+ * @brief Visite une variable 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return le nom de la varibale
+ */
 antlrcpp::Any IRGenVisitor::visitAffect(
     ifccParser::AffectContext *ctx) {                               // a op b
     std::string to = ctx->VARIABLE()->getText();                    // a
