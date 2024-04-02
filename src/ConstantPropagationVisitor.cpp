@@ -47,7 +47,6 @@ void ConstantPropagationVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
     } else {
         constants.erase(unaryOp.getTo());
     }
-
 }
 
 void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
@@ -78,8 +77,33 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         ir::IRInstr *binOpConst = new ir::AffectConst(binOp.getTo(), value);
         binOpConst->setBlock(&binOp.getBlock());
         this->instr->reset(binOpConst);
+    } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
+               this->constants.at(binOp.getLeft()) == 0 &&
+               binOp.getType() == ir::BinOp::ADD) {
+        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getRight());
+        affect->setBlock(&binOp.getBlock());
+        this->instr->reset(affect);
+    } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
+               this->constants.at(binOp.getLeft()) == 1 &&
+               binOp.getType() == ir::BinOp::MUL) {
+        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getRight());
+        affect->setBlock(&binOp.getBlock());
+        this->instr->reset(affect);
+    } else if (this->constants.find(binOp.getRight()) !=
+                   this->constants.end() &&
+               this->constants.at(binOp.getRight()) == 0 &&
+               binOp.getType() == ir::BinOp::ADD) {
+        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
+        affect->setBlock(&binOp.getBlock());
+        this->instr->reset(affect);
+    } else if (this->constants.find(binOp.getRight()) !=
+                   this->constants.end() &&
+               this->constants.at(binOp.getRight()) == 1 &&
+               binOp.getType() == ir::BinOp::MUL) {
+        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
+        affect->setBlock(&binOp.getBlock());
+        this->instr->reset(affect);
     } else {
         constants.erase(binOp.getTo());
     }
-
 }
