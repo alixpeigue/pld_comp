@@ -106,8 +106,8 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     std::string condition = this->visit(ctx->expression());
 
     // Generate a name for the basic block representing the 'then' branch
-    ir::BasicBlock *thenBlock = createBlock(".BB");
-    ir::BasicBlock *elseBlock = createBlock(".BB");
+    ir::BasicBlock *thenBlock = createBlock(".IFTHEN");
+    ir::BasicBlock *elseBlock = createBlock(".IFELSE");
 
     ir::BasicBlock *end = elseBlock;
     std::unique_ptr<ir::Next> endNext = currentBlock->getNext();
@@ -115,7 +115,7 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // Check if there is an 'else' statement.
     if (ctx->else_stmt) {
         // If so, create a new block for the end of the if statement
-        end = createBlock(".BB");
+        end = createBlock(".IFFOLLOW");
         elseBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
     }
 
@@ -167,13 +167,13 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     ifccParser::While_stmtContext *ctx) {
 
     // Create a new basic block for the loop condition.
-    ir::BasicBlock *conditionBlock = createBlock(".BB");
+    ir::BasicBlock *conditionBlock = createBlock(".WHCOND");
 
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
-    ir::BasicBlock *thenBlock = createBlock(".BB");
+    ir::BasicBlock *thenBlock = createBlock(".WHTHEN");
     thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(conditionBlock));
 
-    ir::BasicBlock *elseBlock = createBlock(".BB");
+    ir::BasicBlock *elseBlock = createBlock(".WHELSE");
     elseBlock->setNext(this->currentBlock->getNext());
 
     this->currentBlock->setNext(
@@ -183,7 +183,7 @@ antlrcpp::Any IRGenVisitor::visitWhile_stmt(
     auto condition = this->visit(ctx->expression());
 
     // Set the conditional jumlp on condition block
-    conditionBlock->setNext(std::make_unique<ir::ConditionalJump>(
+    this->currentBlock->setNext(std::make_unique<ir::ConditionalJump>(
         std::move(condition), thenBlock, elseBlock));
 
     this->currentBlock = thenBlock;
@@ -218,11 +218,11 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
     ifccParser::Do_while_stmtContext *ctx) {
 
     // Create new basic blocks for the 'then' and 'else' branches of the loop.
-    ir::BasicBlock *thenBlock = createBlock(".BB");
-    ir::BasicBlock *elseBlock = createBlock(".BB");
+    ir::BasicBlock *thenBlock = createBlock(".WHTHEN");
+    ir::BasicBlock *elseBlock = createBlock(".WHTHEN");
     elseBlock->setNext(this->currentBlock->getNext());
 
-    ir::BasicBlock *conditionBlock = createBlock(".BB");
+    ir::BasicBlock *conditionBlock = createBlock(".WHCOND");
     thenBlock->setNext(std::make_unique<ir::UnconditionalJump>(elseBlock));
 
     // Set up an unconditional jump from the current block to the 'then' block.
@@ -231,7 +231,7 @@ antlrcpp::Any IRGenVisitor::visitDo_while_stmt(
 
     this->currentBlock = conditionBlock;
     std::string condition = this->visit(ctx->expression());
-    conditionBlock->setNext(std::make_unique<ir::ConditionalJump>(
+    this->currentBlock->setNext(std::make_unique<ir::ConditionalJump>(
         std::move(condition), thenBlock, elseBlock));
 
     // Move to the 'then' block.
@@ -893,7 +893,7 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     ir::BasicBlock *falseBlock = createBlock(".AND");
 
     // On créé le bloc de suite
-    ir::BasicBlock *followBlock = createBlock(".AND");
+    ir::BasicBlock *followBlock = createBlock(".ANDFOLLOW");
 
     // On jump vers le lazy ou le false en fonction de b1
     auto conditional1 =
