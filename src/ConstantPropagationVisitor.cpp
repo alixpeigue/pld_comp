@@ -138,11 +138,25 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         binOpConst->setBlock(&binOp.getBlock());
         binOpConst->getBlock().replaceInstr(instr_index, binOpConst);
     } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
-               this->constants.at(binOp.getLeft()) == 0 &&
-               binOp.getType() == ir::BinOp::ADD) {
-        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getRight());
-        affect->setBlock(&binOp.getBlock());
-        affect->getBlock().replaceInstr(instr_index, affect);
+               this->constants.at(binOp.getLeft()) == 0) {
+        ir::IRInstr *instr;
+        if (binOp.getType() == ir::BinOp::ADD ||
+            binOp.getType() == ir::BinOp::SUB ||
+            binOp.getType() == ir::BinOp::OR_BIN ||
+            binOp.getType() == ir::BinOp::XOR_BIN) {
+            instr = new ir::Affect(binOp.getTo(), binOp.getRight());
+        } else if (binOp.getType() == ir::BinOp::MOD ||
+                   binOp.getType() == ir::BinOp::DIV ||
+                   binOp.getType() == ir::BinOp::SHIFT_R ||
+                   binOp.getType() == ir::BinOp::SHIFT_L ||
+                   binOp.getType() == ir::BinOp::AND_BIN) {
+            instr = new ir::AffectConst(binOp.getTo(), 0);
+        } else {
+            constants.erase(binOp.getTo());
+            return;
+        }
+        instr->setBlock(&binOp.getBlock());
+        instr->getBlock().replaceInstr(instr_index, instr);
     } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
                this->constants.at(binOp.getLeft()) == 1 &&
                binOp.getType() == ir::BinOp::MUL) {
@@ -152,14 +166,21 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
     } else if (this->constants.find(binOp.getRight()) !=
                    this->constants.end() &&
                this->constants.at(binOp.getRight()) == 0 &&
-               binOp.getType() == ir::BinOp::ADD) {
+               (binOp.getType() == ir::BinOp::ADD ||
+                binOp.getType() == ir::BinOp::SUB ||
+                binOp.getType() == ir::BinOp::OR_BIN ||
+                binOp.getType() == ir::BinOp::XOR_BIN ||
+                binOp.getType() == ir::BinOp::SHIFT_L ||
+                binOp.getType() == ir::BinOp::SHIFT_R)) {
         ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
         affect->setBlock(&binOp.getBlock());
         affect->getBlock().replaceInstr(instr_index, affect);
     } else if (this->constants.find(binOp.getRight()) !=
                    this->constants.end() &&
                this->constants.at(binOp.getRight()) == 1 &&
-               binOp.getType() == ir::BinOp::MUL) {
+               (binOp.getType() == ir::BinOp::MUL ||
+                binOp.getType() == ir::BinOp::DIV ||
+                binOp.getType() == ir::BinOp::MOD)) {
         ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
         affect->setBlock(&binOp.getBlock());
         affect->getBlock().replaceInstr(instr_index, affect);
