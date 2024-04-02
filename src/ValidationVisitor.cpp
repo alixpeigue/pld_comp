@@ -306,9 +306,9 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
 ValidationVisitor::Var *ValidationVisitor::getVariable(
     const std::string &name) {
 
-    for (auto &scope : scopes | std::ranges::views::reverse) {
+    for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
         try {
-            return &scope.at(name);
+            return &scope->at(name);
         } catch (std::out_of_range) {
         }
     }
