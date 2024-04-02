@@ -18,7 +18,7 @@
 DESTNAME=$1
 SOURCENAME=$2
 
-$(dirname $0)/../ifcc -mrv64 $SOURCENAME >$DESTNAME
+$(dirname $0)/../ifcc -trv64 $SOURCENAME >$DESTNAME
 retcode=$?
 
 # forward exit status of the compiler
