@@ -57,7 +57,7 @@ expression: INT_CONST # intConst |
             VARIABLE '--' #postDec |
             VARIABLE '(' expression? (',' expression)* ')' # func_call ;
 
-type : 'int' | 'void' ;
+type : 'int' | 'void' | 'char' ;
 
 IF : 'if' ;
 ELSE : 'else' ;

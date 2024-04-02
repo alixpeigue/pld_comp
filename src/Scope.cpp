@@ -8,6 +8,8 @@ VarType::VarType(const std::string &name) {
         type = VOID;
     } else if (name == "int") {
         type = INT;
+    } else if (name == "char") {
+        type = CHAR;
     } else {
         type = VOID;
     }

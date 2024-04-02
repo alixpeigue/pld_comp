@@ -42,6 +42,8 @@ public:
     virtual antlrcpp::Any visitReturn_stmt(
         ifccParser::Return_stmtContext *ctx) override;
 
+    virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext *ctx) override;
+
     virtual antlrcpp::Any visitDeclaAffect(
         ifccParser::DeclaAffectContext *ctx) override;
 
@@ -97,6 +99,7 @@ private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
     std::unique_ptr<ir::CFG> currentFunction;
     ir::BasicBlock *currentBlock;
+    VarType tmpType;
     int counterTempVariables = 0;
     int counterBlocks = 0;
 

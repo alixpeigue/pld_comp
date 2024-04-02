@@ -393,11 +393,18 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
     return 0;
 }
 
+antlrcpp::Any IRGenVisitor::visitDeclaration(
+    ifccParser::DeclarationContext *ctx) {
+    tmpType = VarType(ctx->type()->getText());
+    visitChildren(ctx);
+    return 0;
+}
+
 antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
     // Add a variable declaration to the current block's scope.
     this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(),
-                                               VarType::INT);
+                                               tmpType);
     if (ctx->expression()) {
         // If there's an expression, create an instruction to affect the
         // variable.

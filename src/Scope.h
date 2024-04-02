@@ -9,7 +9,7 @@
 class VarType {
 
 public:
-    enum Type { VOID, INT };
+    enum Type { VOID, INT, CHAR };
 
     VarType() = default;
     VarType(Type type) : type(type){};
@@ -20,7 +20,7 @@ public:
 
 protected:
     Type type;
-    static constexpr int sizes[] = {0, 4};
+    static constexpr int sizes[] = {0, 4, 1};
 };
 
 using Variable = std::pair<VarType, uint32_t>;
@@ -35,7 +35,7 @@ public:
     uint32_t getSize();
 
     void addVariable(std::string name, VarType type) {
-        size += 4;
+        size += type.getSize();
         vars.insert(std::make_pair(name, std::make_pair(type, size)));
     }
 
