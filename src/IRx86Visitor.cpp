@@ -1,7 +1,7 @@
 /**
  * @file IRx86Visitor.cpp
  * @author H4231
- * @brief 
+ * @brief Génération du code assembleur x86
  * @date 2024-04-02
  * 
  * 
