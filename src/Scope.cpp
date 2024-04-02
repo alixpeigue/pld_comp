@@ -1,7 +1,22 @@
+/**
+ * @file Scope.cpp
+ * @author H4231
+ * @brief Gestion variables (type) d'une scope
+ * @date 2024-04-02
+ * 
+ */
+
 #include "Scope.h"
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+
+
+/**
+ * @brief Construct a new Var Type:: Var Type object
+ * 
+ * @param name nom du type
+ */
 
 VarType::VarType(const std::string &name) {
     if (name == "void") {
@@ -12,6 +27,13 @@ VarType::VarType(const std::string &name) {
         type = VOID;
     }
 }
+
+/**
+ * @brief Recupere la variable stocke dans la map 
+ * 
+ * @param varName nom de la variable quand veut recuperer 
+ * @return std::optional<Variable>  
+ */
 
 std::optional<Variable> Scope::getVariable(const std::string &varName) {
     try {
