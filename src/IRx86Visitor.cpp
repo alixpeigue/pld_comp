@@ -1,8 +1,21 @@
+/**
+ * @file IRx86Visitor.cpp
+ * @author H4231
+ * @brief 
+ * @date 2024-04-02
+ * 
+ * 
+ */
 #include "IRx86Visitor.h"
 #include "Scope.h"
 #include "ir.h"
 #include <iostream>
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction d'affectation d'une variable à une autre
+ * 
+ * @param affect Une instruction d'affectation variable à variable
+ */
 void IRx86Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
     scope.print(std::cerr);
@@ -14,6 +27,11 @@ void IRx86Visitor::visitAffect(ir::Affect &affect) {
     std::cout << "    mov DWORD PTR -" << to.second << "[rbp], eax\n";
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction d'affectation d'une constante à une variable
+ * 
+ * @param affectConst Une instruction d'affectation constante à variable
+ */
 void IRx86Visitor::visitAffectConst(ir::AffectConst &affectConst) {
     Variable to = affectConst.getBlock()
                       .getScope()
@@ -23,6 +41,11 @@ void IRx86Visitor::visitAffectConst(ir::AffectConst &affectConst) {
               << affectConst.getValue() << "\n";
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction d'opération à deux opérandes, en fonction de l'opérateur
+ * 
+ * @param binop Une instruction d'opération à deux opérandes
+ */
 void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
     Scope &scope = binop.getBlock().getScope();
     Variable to = scope.getVariable(binop.getTo()).value();
@@ -62,6 +85,11 @@ void IRx86Visitor::visitBinOp(ir::BinOp &binop) {
     }
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction d'opération à un opérande, en fonction de l'opérateur
+ * 
+ * @param unaryop Une instruction d'opération à un opérande
+ */
 void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     Scope &scope = unaryop.getBlock().getScope();
     Variable to = scope.getVariable(unaryop.getTo()).value();
@@ -105,6 +133,11 @@ void IRx86Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     }
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à un block. Rajoute les instructions du block puis un jump vers le block suivant.
+ * 
+ * @param bb Un block
+ */
 void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     std::cout << bb.getName() << ":\n";
     for (auto &instruction : bb.getInstructions()) {
@@ -116,6 +149,11 @@ void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     bb.setNext(std::move(next));
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant au graphique de flot de contrôle (CFG) donné .
+ * 
+ * @param cfg Un graphique de flot de contrôle (CFG)
+ */
 void IRx86Visitor::visitCFG(ir::CFG &cfg) {
 
     std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
@@ -144,10 +182,20 @@ void IRx86Visitor::visitCFG(ir::CFG &cfg) {
     // epilogue
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction de saut absolu
+ * 
+ * @param jump Une instruction de saut absolu
+ */
 void IRx86Visitor::visitUnconditionalJump(ir::UnconditionalJump &jump) {
     std::cout << "    jmp " << jump.getTo().getName() << "\n";
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction de saut conditionnel
+ * 
+ * @param jump Une instruction de saut conditionnel
+ */
 void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
     Variable cond =
         jump.getBlock().getScope().getVariable(jump.getCondition()).value();
@@ -156,6 +204,11 @@ void IRx86Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
     std::cout << "    jmp " << jump.getThen()->getName() << "\n";
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction switch jump
+ * 
+ * @param jump Une instruction switch jump
+ */
 void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
     Variable expr = jump.getBlock()
                         .getScope()
@@ -171,6 +224,11 @@ void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
     }
 }
 
+/**
+ * @brief Donne le code assembleur x86 correspondant à une instruction de retour
+ * 
+ * @param ret Une instruction de retour
+ */
 void IRx86Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
 
@@ -180,6 +238,12 @@ void IRx86Visitor::visitReturn(ir::Return &ret) {
     std::cout << "    ret\n";
 }
 
+
+/**
+ * @brief Donne le code assembleur x86 correspondant à un appel de fonction
+ * 
+ * @param call Un appel de fonction
+ */
 void IRx86Visitor::visitCall(ir::Call &call) {
     std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
@@ -216,10 +280,13 @@ void IRx86Visitor::visitCall(ir::Call &call) {
         << "[rbp], eax\n";
 }
 
-/*
-Renvoie l'instruction x86 correspondant a l'opérateur en parametre
-Retour possible : add, sub, imul, or, xor, and, setXX
-*/
+
+/**
+ * @brief Renvoie l'instruction x86 correspondant a l'opérateur en paramètre
+ * 
+ * @param op 
+ * @return Retour possible : add, sub, imul, or, xor, and, setXX (std::string)
+ */
 inline std::string IRx86Visitor::getInstrFromOp(ir::BinOp::BinOpType op) {
     std::string instr = "ERR";
     switch (op) {
