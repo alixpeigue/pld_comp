@@ -2,8 +2,18 @@
 
 #include "IRBaseVisitor.h"
 #include <ostream>
+
+/**
+ * @brief un visiteur d'IR qui génère le code assembleur RISC-V64 correspondant à la représentation intermédiaire
+ * 
+ */
 class RV64Visitor : public IRBaseVisitor {
 public:
+    /**
+     * @brief Construit un visiteur
+     * 
+     * @param os le stream sur lequel générer le code
+     */
     RV64Visitor(std::ostream &os) : os(os) {}
 
 private:
