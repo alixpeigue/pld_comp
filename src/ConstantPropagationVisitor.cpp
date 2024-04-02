@@ -177,13 +177,19 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
         affect->getBlock().replaceInstr(instr_index, affect);
     } else if (this->constants.find(binOp.getRight()) !=
                    this->constants.end() &&
-               this->constants.at(binOp.getRight()) == 1 &&
-               (binOp.getType() == ir::BinOp::MUL ||
-                binOp.getType() == ir::BinOp::DIV ||
-                binOp.getType() == ir::BinOp::MOD)) {
-        ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
-        affect->setBlock(&binOp.getBlock());
-        affect->getBlock().replaceInstr(instr_index, affect);
+               this->constants.at(binOp.getRight()) == 1) {
+        ir::IRInstr *instr;
+        if (binOp.getType() == ir::BinOp::MUL ||
+            binOp.getType() == ir::BinOp::DIV) {
+            instr = new ir::Affect(binOp.getTo(), binOp.getLeft());
+        } else if (binOp.getType() == ir::BinOp::MOD) {
+            instr = new ir::AffectConst(binOp.getTo(), 0);
+        } else {
+            constants.erase(binOp.getTo());
+            return;
+        }
+        instr->setBlock(&binOp.getBlock());
+        instr->getBlock().replaceInstr(instr_index, instr);
     } else {
         constants.erase(binOp.getTo());
     }
