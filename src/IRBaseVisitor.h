@@ -8,6 +8,11 @@
 #pragma once
 
 #include "ir.h"
+/**
+ * @brief Base des visiteurs d'IR.
+ * On peut visiter l'IR pour passer des couches d'optimisation ou pour générer du code
+ * 
+ */
 class IRBaseVisitor {
 public:
     virtual void visitAffect(ir::Affect &affect) = 0;

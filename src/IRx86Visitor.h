@@ -4,6 +4,10 @@
 #include "ir.h"
 #include <iostream>
 
+/**
+ * @brief Visiteur générant le code assembleur x86 à partir de l'ir
+ * 
+ */
 class IRx86Visitor : public IRBaseVisitor {
 public:
     IRx86Visitor() { std::cout << ".intel_syntax noprefix\n"; }
