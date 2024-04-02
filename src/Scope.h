@@ -74,7 +74,7 @@ public:
      a est le parent de b
      * @param parent le parent du scope
      */
-    Scope(Scope *parent) : size(0), parent(parent){};
+    Scope(Scope *parent) : parent(parent), size(0){};
 
     /**
      * @brief Cherche une variable dans ce scope, si elle n'est pas trouvée dans

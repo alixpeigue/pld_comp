@@ -10,15 +10,6 @@
 
 antlrcpp::Any ValidationVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     this->visitChildren(ctx);
-    // for (auto &scope : this->scopes) {
-    //     for (auto &var : scope) {
-    //         std::cout << "Variable" << var.first << std::endl;
-    //         if (var.second.second == VarState::DECLARED) {
-    //             std::cerr << "Waring : variable '" << var.first
-    //                       << "' is declared but never used\n";
-    //         }
-    //     }
-    // }
     return 0;
 }
 

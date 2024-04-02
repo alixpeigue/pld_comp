@@ -6,8 +6,24 @@
 #include "ifccParser.h"
 #include "support/Any.h"
 #include <unordered_map>
+
+/**
+ * @brief Classe qui vérifie que l'arbre de syntaxe est valide
+ * @details
+ - variables non déclarées
+ - validation des types
+ - variables déclarées plusieurs fois
+ - variables déclarées mais pas utilisées
+ - function déclarées plusieurs fois
+ - respect des signatures des fonctions
+ */
 class ValidationVisitor : public ifccBaseVisitor {
 public:
+    /**
+     * @brief Construit un visiteur de validation d'AST
+     * 
+     * @param reporter La classe à qui reporter les erreurs
+     */
     ValidationVisitor(const ErrorReporter &reporter) : reporter(reporter) {}
 
 protected:

@@ -214,10 +214,7 @@ public:
      * @param returnType type de retour de la fonction représentée par le CFG
      */
     CFG(std::string name, VarType returnType)
-<<<<<<< HEAD
         : returnType(returnType), name(std::move(name)) {}
-=======
-        : name(std::move(name)), returnType(returnType) {}
 
     /**
      * @brief Ajoute un bloc dans le CFG. Prend l'ownership du bloc via le
@@ -225,7 +222,6 @@ public:
      *
      * @param block le bloc à ajouter dans le CFG
      */
->>>>>>> b7f852e (add doxygen config + make doc in makefile + add doc for ir)
     void addBlock(std::unique_ptr<BasicBlock> block);
 
     /**
