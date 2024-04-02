@@ -1,3 +1,10 @@
+/**
+ * @file CustomExceptions.h
+ * @author H4231
+ * @brief Initilisation des classes d'erreur
+ * @date 2024-04-02
+ */
+
 #pragma once
 #include <exception>
 
