@@ -103,7 +103,7 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
  */
 antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // Extract the condition expression for the if statement.
-    std::string condition = this->visit(ctx->expression());
+    ir::BasicBlock *condBlock = createBlock(".IFCOND");
 
     // Generate a name for the basic block representing the 'then' branch
     ir::BasicBlock *thenBlock = createBlock(".IFTHEN");
@@ -119,11 +119,15 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         elseBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
     }
 
+    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(condBlock));
+    this->currentBlock = std::move(condBlock);
+    std::string condition = this->visit(ctx->expression());
+
     // Create a conditional jump instruction based on the condition.
     end->setNext(std::move(endNext));
 
     auto conditional = std::make_unique<ir::ConditionalJump>(
-        std::move(condition), thenBlock, elseBlock);
+        condition, thenBlock, elseBlock);
 
     // Set the next block for the current block to be the conditional jump.
     this->currentBlock->setNext(std::move(conditional));
