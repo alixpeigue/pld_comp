@@ -235,6 +235,7 @@ void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
                         .getVariable(jump.getExpressionTest())
                         .value();
     auto caseTests = jump.getCaseTests();
+    auto defaultBlock = jump.getDefaultBlock();
 
     for (size_t i = 0; i < caseTests.size(); ++i) {
         auto caseTest = caseTests[i];
@@ -242,6 +243,7 @@ void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
            << caseTest.first << "\n";
         os << "    je " << caseTest.second->getName() << "\n";
     }
+    std::cout << "    jmp " << defaultBlock->getName() << "\n";
 }
 
 /**
