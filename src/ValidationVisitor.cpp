@@ -185,6 +185,7 @@ antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
 antlrcpp::Any ValidationVisitor::visitFunc_call(
     ifccParser::Func_callContext *ctx) {
     std::string funcName = ctx->VARIABLE()->getText();
+    this->visitChildren(ctx);
     Function f;
     try {
         f = this->functions.at(funcName);
@@ -203,6 +204,7 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
     }
     if (f.at(0) == VarType::VOID &&
         !dynamic_cast<ifccParser::StatementContext *>(ctx->parent)) {
+        // if vunction returns void and is not in a statement (its return value is not ignored)
 
         this->reporter.report("void value not ignored as it should be", ctx);
         exit(1);
