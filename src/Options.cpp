@@ -8,13 +8,16 @@ Options Options::fromArgs(int argn, char **argv) {
     options.out = "out.s";
     options.target = "x86-64";
 
-    while ((opt = getopt(argn, argv, "t:o:")) != -1) {
+    while ((opt = getopt(argn, argv, "t:o:s")) != -1) {
         switch (opt) {
         case 't':
             options.target = optarg;
             break;
         case 'o':
             options.out = optarg;
+            break;
+        case 's':
+            options.out = "stdout";
             break;
         default:
             std::cerr << "usage :" << argv[0] << "[-t target] [-o out] file\n";

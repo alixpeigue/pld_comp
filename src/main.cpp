@@ -37,13 +37,20 @@ int main(int argn, char **argv) {
     }
     in << lecture.rdbuf();
 
-    ofstream ofs(opt.out, ofstream::out);
+    ostream *os;
+    unique_ptr<ofstream> ofs;
+    if (opt.out == "stdout") {
+        os = &std::cout;
+    } else {
+        ofs = make_unique<ofstream>(opt.out, ofstream::out);
+        os = ofs.get();
+    }
 
     std::unique_ptr<IRBaseVisitor> codeGenVisitor;
     if (opt.target == "rv64")
-        codeGenVisitor = std::make_unique<RV64Visitor>(ofs);
+        codeGenVisitor = std::make_unique<RV64Visitor>(*os);
     else if (opt.target == "x86-64")
-        codeGenVisitor = std::make_unique<IRx86Visitor>(ofs);
+        codeGenVisitor = std::make_unique<IRx86Visitor>(*os);
     else {
         std::cerr << "Unknown architecture '" << opt.target << "'";
         exit(0);
