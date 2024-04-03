@@ -20,8 +20,8 @@ void ConstantPropagationVisitor::visitAffectConst(ir::AffectConst &affect) {
 
 void ConstantPropagationVisitor::visitAffect(ir::Affect &affect) {
     if (this->constants.find(affect.getFrom()) != this->constants.end()) {
-        // if we have a value for "from", we can replace the Affect by an AffectConst
-        // we now also have a value for "to"
+        // if we have a value for "from", we can replace the Affect by an
+        // AffectConst we now also have a value for "to"
         int value = this->constants.at(affect.getFrom());
         this->constants[affect.getTo()] = value;
         ir::IRInstr *affectConst = new ir::AffectConst(affect.getTo(), value);
@@ -85,9 +85,11 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
     // we propagate, compute and/or simplify expressions
     if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
         this->constants.find(binOp.getRight()) != this->constants.end()) {
+
         int value = this->constants.at(binOp.getLeft());
         int rightValue = this->constants.at(binOp.getRight());
 
+        // Do the right operation (value = leftValue op rightValue)
         switch (binOp.getType()) {
         case ir::BinOp::ADD:
             value += rightValue;
@@ -141,36 +143,59 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
             return;
         }
 
+        // make "to" a constant
         this->constants[binOp.getTo()] = value;
         ir::IRInstr *binOpConst = new ir::AffectConst(binOp.getTo(), value);
         binOpConst->setBlock(&binOp.getBlock());
         binOpConst->getBlock().replaceInstr(instr_index, binOpConst);
+
     } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
                this->constants.at(binOp.getLeft()) == 0) {
+
+        // neutral element case: 0 op right
         ir::IRInstr *instr;
+
         if (binOp.getType() == ir::BinOp::ADD ||
-            binOp.getType() == ir::BinOp::SUB ||
             binOp.getType() == ir::BinOp::OR_BIN ||
             binOp.getType() == ir::BinOp::XOR_BIN) {
+
+            // 0 + right == right, 0 | right == right, 0 ^ right == right
             instr = new ir::Affect(binOp.getTo(), binOp.getRight());
+
+        } else if (binOp.getType() == ir::BinOp::SUB) {
+
+            // 0 - right == -right
+            instr = new ir::UnaryOp(ir::UnaryOp::NEG, binOp.getTo(),
+                                    binOp.getRight());
+
         } else if (binOp.getType() == ir::BinOp::MOD ||
                    binOp.getType() == ir::BinOp::DIV ||
                    binOp.getType() == ir::BinOp::SHIFT_R ||
                    binOp.getType() == ir::BinOp::SHIFT_L ||
                    binOp.getType() == ir::BinOp::AND_BIN) {
+
+            // 0 % right == 0, 0 / right == 0, 0 >> right == 0, 0 << right, 0 &
+            // right == 0
             instr = new ir::AffectConst(binOp.getTo(), 0);
+
         } else {
+            // no neutral element
             constants.erase(binOp.getTo());
             return;
         }
+
         instr->setBlock(&binOp.getBlock());
         instr->getBlock().replaceInstr(instr_index, instr);
+
     } else if (this->constants.find(binOp.getLeft()) != this->constants.end() &&
                this->constants.at(binOp.getLeft()) == 1 &&
                binOp.getType() == ir::BinOp::MUL) {
+
+        // neutral element case: 1 * right == right
         ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getRight());
         affect->setBlock(&binOp.getBlock());
         affect->getBlock().replaceInstr(instr_index, affect);
+
     } else if (this->constants.find(binOp.getRight()) !=
                    this->constants.end() &&
                this->constants.at(binOp.getRight()) == 0 &&
@@ -180,26 +205,37 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
                 binOp.getType() == ir::BinOp::XOR_BIN ||
                 binOp.getType() == ir::BinOp::SHIFT_L ||
                 binOp.getType() == ir::BinOp::SHIFT_R)) {
+        // neutral element case: left op 0
+        // left + 0 == left - 0 == left | 0 == left ^ 0 == left << 0 == left >>
+        // 0 == left
         ir::IRInstr *affect = new ir::Affect(binOp.getTo(), binOp.getLeft());
         affect->setBlock(&binOp.getBlock());
         affect->getBlock().replaceInstr(instr_index, affect);
     } else if (this->constants.find(binOp.getRight()) !=
                    this->constants.end() &&
                this->constants.at(binOp.getRight()) == 1) {
+        // neutral element case: left op 1
         ir::IRInstr *instr;
+
         if (binOp.getType() == ir::BinOp::MUL ||
             binOp.getType() == ir::BinOp::DIV) {
+            // left * 1 == left / 1 == left
             instr = new ir::Affect(binOp.getTo(), binOp.getLeft());
         } else if (binOp.getType() == ir::BinOp::MOD) {
+            // left % 1 == 0
             instr = new ir::AffectConst(binOp.getTo(), 0);
         } else {
+            // no neutral element
             constants.erase(binOp.getTo());
             return;
         }
+
         instr->setBlock(&binOp.getBlock());
         instr->getBlock().replaceInstr(instr_index, instr);
     } else {
-        // if we don't have a value, it kills any previously know falue for "to"
+        // if we don't have a value, it kills any previously known value for
+        // "to"
         constants.erase(binOp.getTo());
     }
 }
+
