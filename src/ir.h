@@ -193,19 +193,23 @@ public:
      * switch sous la forme (valeur, block)
      */
     SwitchJump(std::string expressionTest,
-               std::vector<std::pair<std::string, BasicBlock *>> caseTests)
+               std::vector<std::pair<std::string, BasicBlock *>> caseTests,
+               BasicBlock *defaultBlock)
         : expressionTest(std::move(expressionTest)),
-          caseTests(std::move(caseTests)) {}
+          caseTests(std::move(caseTests)),
+          defaultBlock(std::move(defaultBlock)) {}
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getExpressionTest() const { return expressionTest; }
     const std::vector<std::pair<std::string, BasicBlock *>> &getCaseTests()
         const {
         return caseTests;
     }
+    const BasicBlock *getDefaultBlock() const { return defaultBlock; }
 
 protected:
     std::string expressionTest;
     std::vector<std::pair<std::string, BasicBlock *>> caseTests;
+    BasicBlock *defaultBlock;
 };
 
 /**

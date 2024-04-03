@@ -312,7 +312,7 @@ antlrcpp::Any IRGenVisitor::visitSwitch_stmt(
 
     if (!caseTests.empty()) {
         currentBlock->setNext(
-            std::make_unique<ir::SwitchJump>(expressionTest, caseTests));
+            std::make_unique<ir::SwitchJump>(expressionTest, caseTests, defaultBlock));
     }
 
     for (size_t i = 0; i < ctx->case_stmt().size(); ++i) {
