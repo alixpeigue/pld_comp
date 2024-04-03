@@ -162,12 +162,16 @@ void IRx86Visitor::visitBasicBlock(ir::BasicBlock &bb) {
 void IRx86Visitor::visitCFG(ir::CFG &cfg) {
 
     std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+    Variable ret = cfg.getEpilogue().getScope().getVariable("#return").value();
     // prelude
     os << ".globl " << cfg.getName() << "\n";
     os << cfg.getName() << ":\n";
     os << "    push rbp\n";
     os << "    mov rbp, rsp\n";
     os << "    sub rsp, " << cfg.getSize() << '\n';
+    if (cfg.getName() == "main") {
+        os << "    mov DWORD PTR -" << ret.second << "[rbp], 0\n";
+    }
 
     for (size_t i = 0; i < cfg.getArgs().size() && i < regs.size(); ++i) {
         os << "    mov DWORD PTR -"
