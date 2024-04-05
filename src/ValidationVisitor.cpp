@@ -1,3 +1,11 @@
+/**
+ * @file ValidationVisitor.cpp
+ * @author H4231
+ * @brief Verifie la validation des elements du code (declaration avant utilisation,type ...)
+ * @date 2024-04-02
+ * 
+ */
+
 #include "Scope.h"
 #include "ValidationVisitor.h"
 #include "ifccParser.h"
@@ -8,20 +16,48 @@
 #include <sstream>
 #include <stdexcept>
 
+/**
+ * @brief Visite un axiome dans le cadre de la validation de l'arbre de syntaxe.
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
+
 antlrcpp::Any ValidationVisitor::visitAxiom(ifccParser::AxiomContext *ctx) {
     this->visitChildren(ctx);
     return 0;
 }
+
+/**
+ * @brief  Visite un contexte représentant une constante entière.
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitIntConst(
     ifccParser::IntConstContext *ctx) {
     return VarType(VarType::INT);
 }
 
+/**
+ * @brief  Visite un contexte représentant une cosntante.
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
+
 antlrcpp::Any ValidationVisitor::visitCharConst(
     ifccParser::CharConstContext *ctx) {
     return VarType(VarType::INT);
 }
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitVariable(
     ifccParser::VariableContext *ctx) {
@@ -34,15 +70,29 @@ antlrcpp::Any ValidationVisitor::visitVariable(
     } else {
         std::ostringstream message;
         message << "Variable '" << ctx->VARIABLE()->getText()
-                << "' is used withoud being initialized";
+                << "' is used without being initialized";
         reporter.report(message.str(), ctx);
         exit(1);
     }
 }
 
+/**
+ * @brief Visite le parent 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
+
 antlrcpp::Any ValidationVisitor::visitParen(ifccParser::ParenContext *ctx) {
     return this->visit(ctx->expression());
 }
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
     std::string name = ctx->VARIABLE()->getText();
@@ -58,6 +108,13 @@ antlrcpp::Any ValidationVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
+
 antlrcpp::Any ValidationVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
     std::string name = ctx->VARIABLE()->getText();
 
@@ -72,23 +129,47 @@ antlrcpp::Any ValidationVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitUnaryAdd(
     ifccParser::UnaryAddContext *ctx) {
     return this->visit(ctx->expression());
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud 
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitMult(ifccParser::MultContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitAdd(ifccParser::AddContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
@@ -100,26 +181,59 @@ antlrcpp::Any ValidationVisitor::visitShift(ifccParser::ShiftContext *ctx) {
     return t1;
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
+
 antlrcpp::Any ValidationVisitor::visitCompare(ifccParser::CompareContext *ctx) {
     return VarType(VarType::INT);
 }
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitCompareEq(
     ifccParser::CompareEqContext *ctx) {
     return VarType(VarType::INT);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
     VarType t2 = this->visit(ctx->expression(1));
     return std::max(t1, t2);
 }
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
     VarType t1 = this->visit(ctx->expression(0));
@@ -127,16 +241,35 @@ antlrcpp::Any ValidationVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
     return std::max(t1, t2);
 }
 
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitAnd(ifccParser::AndContext *ctx) {
     this->visitChildren(ctx);
     return VarType(VarType::INT);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitOr(ifccParser::OrContext *ctx) {
     this->visitChildren(ctx);
     return VarType(VarType::INT);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
 
     Var *ltype;
@@ -154,6 +287,12 @@ antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
     return ltype->first;
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
     std::string name = ctx->VARIABLE()->getText();
 
@@ -168,6 +307,13 @@ antlrcpp::Any ValidationVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
     }
 }
 
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
     std::string name = ctx->VARIABLE()->getText();
 
@@ -182,6 +328,13 @@ antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
     }
 }
 
+
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitFunc_call(
     ifccParser::Func_callContext *ctx) {
     std::string funcName = ctx->VARIABLE()->getText();
@@ -210,6 +363,12 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
     return f.at(0);
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitFunction(
     ifccParser::FunctionContext *ctx) {
 
@@ -242,18 +401,31 @@ antlrcpp::Any ValidationVisitor::visitFunction(
     return 0;
 }
 
+/**
+ * @brief Visite le contexte et mentionner que la variable est declaree mais pas utilise
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     this->scopes.push_back(Scope());
     this->visitChildren(ctx);
     for (auto &var : this->scopes.back()) {
         if (var.second.second == VarState::DECLARED) {
-            std::cerr << "Waring : variable '" << var.first
+            std::cerr << "Warning : variable '" << var.first
                       << "' is declared but never used\n";
         }
     }
     this->scopes.pop_back();
     return 0;
 }
+
+/**
+ * @brief Visite le contexte et check que la variable est un type correcte
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 
 antlrcpp::Any ValidationVisitor::visitDeclaration(
     ifccParser::DeclarationContext *ctx) {
@@ -269,6 +441,13 @@ antlrcpp::Any ValidationVisitor::visitDeclaration(
     return 0;
 }
 
+
+/**
+ * @brief Visite le contexte de déclaration avec affectation met à jour les scopes en ajoutant la variable déclarée.
+ * 
+ * @param ctx contexte antlr4 du noeud
+ * @return antlrcpp::Any 
+ */
 antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
 
@@ -293,6 +472,13 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     return 0;
 }
 
+
+/**
+ *  @brief Récupère une variable par son nom dans les scopes.
+ * 
+ * @param name 
+ * @return ValidationVisitor::Var* 
+ */
 ValidationVisitor::Var *ValidationVisitor::getVariable(
     const std::string &name) {
 
