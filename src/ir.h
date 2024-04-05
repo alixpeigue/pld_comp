@@ -171,6 +171,8 @@ public:
     const std::string &getCondition() const { return condition; }
     BasicBlock *getThen() { return thenBlock; }
     BasicBlock *getElse() { return elseBlock; }
+    void setThen(BasicBlock *bb) { thenBlock = bb; }
+    void setElse(BasicBlock *bb) { elseBlock = bb; }
 
 protected:
     std::string condition;
@@ -204,7 +206,7 @@ public:
         const {
         return caseTests;
     }
-    const BasicBlock *getDefaultBlock() const { return defaultBlock; }
+    BasicBlock *getDefaultBlock() { return defaultBlock; }
 
 protected:
     std::string expressionTest;
@@ -260,9 +262,7 @@ public:
      */
     void visitBlocks(IRBaseVisitor &visitor);
     const std::string &getName() { return name; }
-    const std::vector<std::unique_ptr<BasicBlock>> &getBlocks() const {
-        return blocks;
-    }
+    std::vector<std::unique_ptr<BasicBlock>> &getBlocks() { return blocks; }
     uint32_t getSize();
 
     /**
