@@ -1,6 +1,7 @@
 #include "ConstantPropagationVisitor.h"
 #include "ir.h"
 #include <memory>
+#include <stdexcept>
 
 void ConstantPropagationVisitor::visitCFG(ir::CFG &cfg) {
     for (const auto &block : cfg.getBlocks()) {
@@ -8,6 +9,10 @@ void ConstantPropagationVisitor::visitCFG(ir::CFG &cfg) {
             this->instr_index = i;
             block->getInstructions()[i]->accept(*this);
         }
+        auto next = block->getNext();
+        next->accept(*this);
+        // std::cout << block->getNext().get() << "\n";
+        // block->setNext(std::move(next));
         // we do not propagate beyond blocks
         constants.clear();
     }
@@ -239,3 +244,35 @@ void ConstantPropagationVisitor::visitBinOp(ir::BinOp &binOp) {
     }
 }
 
+void ConstantPropagationVisitor::visitConditionalJump(
+    ir::ConditionalJump &jump) {
+
+    int val;
+    try {
+        val = constants.at(jump.getCondition());
+    } catch (std::out_of_range &) {
+        jump.getBlock().setNext(std::make_unique<ir::ConditionalJump>(jump));
+        return;
+    }
+    std::unique_ptr<ir::Next> newJump;
+    if (val) {
+        newJump = std::make_unique<ir::UnconditionalJump>(jump.getThen());
+        jump.getBlock().setNext(std::move(newJump));
+    } else {
+        newJump = std::make_unique<ir::UnconditionalJump>(jump.getElse());
+        jump.getBlock().setNext(std::move(newJump));
+    }
+}
+
+void ConstantPropagationVisitor::visitUnconditionalJump(
+    ir::UnconditionalJump &jump) {
+    jump.getBlock().setNext(std::make_unique<ir::UnconditionalJump>(jump));
+}
+
+void ConstantPropagationVisitor::visitSwitchJump(ir::SwitchJump &jump) {
+    jump.getBlock().setNext(std::make_unique<ir::SwitchJump>(jump));
+}
+
+void ConstantPropagationVisitor::visitReturn(ir::Return &ret) {
+    ret.getBlock().setNext(std::make_unique<ir::Return>(ret));
+}
