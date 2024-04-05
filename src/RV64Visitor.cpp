@@ -1,3 +1,12 @@
+/**
+ * @file RV64Visitor.cpp
+ * @author H4231
+ * @brief Génération du code assembleur RISC-V
+ * @date 2024-04-05
+ * 
+ */
+
+
 #include "IRx86Visitor.h"
 #include "RV64Visitor.h"
 #include "Scope.h"
@@ -5,6 +14,12 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction d'affectation d'une variable à une autre
+ * 
+ * @param affect Une instruction d'affectation variable à variable
+ */
 
 void RV64Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
@@ -14,6 +29,12 @@ void RV64Visitor::visitAffect(ir::Affect &affect) {
     os << "    sw a5, -" << to.second << "(s0)\n";
 }
 
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction d'affectation d'une constante à une variable
+ * 
+ * @param affectConst Une instruction d'affectation constante à variable
+ */
 void RV64Visitor::visitAffectConst(ir::AffectConst &affectConst) {
     Variable to = affectConst.getBlock()
                       .getScope()
@@ -22,6 +43,12 @@ void RV64Visitor::visitAffectConst(ir::AffectConst &affectConst) {
     os << "    li a5, " << affectConst.getValue() << "\n";
     os << "    sw a5, -" << to.second << "(s0)\n";
 }
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction d'opération à deux opérandes, en fonction de l'opérateur
+ * 
+ * @param binop Une instruction d'opération à deux opérandes
+ */
 
 void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     Scope &scope = binop.getBlock().getScope();
@@ -70,6 +97,12 @@ void RV64Visitor::visitBinOp(ir::BinOp &binop) {
     os << "    sw a5, -" << to.second << "(s0)\n";
 }
 
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction d'opération à un opérande, en fonction de l'opérateur 
+ * 
+ * @param unaryop Une instruction d'opération à un opérande
+ */
+
 void RV64Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     Scope &scope = unaryop.getBlock().getScope();
     Variable to = scope.getVariable(unaryop.getTo()).value();
@@ -114,6 +147,12 @@ void RV64Visitor::visitUnaryOp(ir::UnaryOp &unaryop) {
     os << "    sw a5, -" << to.second << "(s0)\n";
 }
 
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à un block. Rajoute les instructions du block puis un jump vers le block suivant.
+ * 
+ * @param bb  Un block
+ */
+
 void RV64Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     os << bb.getName() << ":\n";
     for (auto &instruction : bb.getInstructions()) {
@@ -125,6 +164,12 @@ void RV64Visitor::visitBasicBlock(ir::BasicBlock &bb) {
     bb.setNext(std::move(next));
 }
 
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant au graphique de flot de contrôle (CFG) donné .
+ * 
+ * @param cfg Un graphique de flot de contrôle (CFG)
+ */
 void RV64Visitor::visitCFG(ir::CFG &cfg) {
 
     std::vector<std::string> regs = {"a0", "a1", "a2", "a3",
@@ -165,6 +210,12 @@ void RV64Visitor::visitCFG(ir::CFG &cfg) {
     // epilogue
 }
 
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction de saut absolu
+ * 
+ * @param jump Une instruction de saut absolu
+ */
 void RV64Visitor::visitUnconditionalJump(ir::UnconditionalJump &jump) {
     os << "    j " << jump.getTo().getName() << "\n";
 }
@@ -176,6 +227,12 @@ void RV64Visitor::visitConditionalJump(ir::ConditionalJump &jump) {
     os << "    beq a5, zero, " << jump.getElse()->getName() << "\n";
     os << "    j " << jump.getThen()->getName() << "\n";
 }
+
+/**
+ * @brief Donne le code assembleur RISC-V  correspondant à une instruction switch jump
+ * 
+ * @param jump Une instruction switch jump
+ */
 
 void RV64Visitor::visitSwitchJump(ir::SwitchJump &jump) {
     Variable expr = jump.getBlock()
@@ -190,6 +247,11 @@ void RV64Visitor::visitSwitchJump(ir::SwitchJump &jump) {
     }
 };
 
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à une instruction de retour
+ * 
+ * @param ret Une instruction de retour
+ */
 void RV64Visitor::visitReturn(ir::Return &ret) {
     Variable retVar = ret.getBlock().getScope().getVariable("#return").value();
 
@@ -202,6 +264,13 @@ void RV64Visitor::visitReturn(ir::Return &ret) {
     os << "    addi sp, sp, " << size << "\n";
     os << "    jr ra\n";
 }
+
+
+/**
+ * @brief Donne le code assembleur RISC-V correspondant à un appel de fonction
+ * 
+ * @param call Un appel de fonction
+ */
 
 void RV64Visitor::visitCall(ir::Call &call) {
 
@@ -224,6 +293,14 @@ void RV64Visitor::visitCall(ir::Call &call) {
     os << "    sw a0, -" << to.second << "(s0)\n";
 }
 
+
+
+/**
+ * @brief Renvoie l'instruction RISC-V correspondant a l'opérateur en paramètre
+ * 
+ * @param op 
+ * @return Retour possible : div, rem, mulw, addw, subw, sllw, sraw, and, or, xor (std::string)
+ */
 inline std::string RV64Visitor::getInstrFromBinOp(ir::BinOp::BinOpType op) {
     switch (op) {
     case ir::BinOp::DIV:
