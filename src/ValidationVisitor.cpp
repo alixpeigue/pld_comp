@@ -1,7 +1,10 @@
 /**
  * @file ValidationVisitor.cpp
  * @author H4231
- * @brief Verifie la validation des elements du code (declaration avant utilisation,type ...)
+ * @brief Verifie des éléments du programme non rejeté par la grammaire
+ *          -nombre de paramètre dans les fonction
+ *          -initialisation des variables
+ *          -type des retours
  * @date 2024-04-02
  * 
  */
@@ -41,7 +44,7 @@ antlrcpp::Any ValidationVisitor::visitIntConst(
 }
 
 /**
- * @brief  Visite un contexte représentant une constante .
+ * @brief  Visite un contexte représentant une constante
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -130,7 +133,7 @@ antlrcpp::Any ValidationVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
 }
 
 /**
- * @brief Visite le contexe du plus 
+ * @brief Visite le contexe des opérateurs unaires (-a ou +a) 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -141,7 +144,8 @@ antlrcpp::Any ValidationVisitor::visitUnaryAdd(
 }
 
 /**
- * @brief Visite le contexte d'une multiplication et verifie les operandes
+ * @brief Visite le contexte d'une multiplication, division ou modulo et
+ *        verifie les operandes
  * 
  * @param ctx contexte antlr4 du noeud 
  * @return antlrcpp::Any 
@@ -153,7 +157,8 @@ antlrcpp::Any ValidationVisitor::visitMult(ifccParser::MultContext *ctx) {
 }
 
 /**
- * @brief Visite le contexte d'une addition et verifie les operandes
+ * @brief Visite le contexte d'une addition ou  soustraction et
+ *        verifie les operandes
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -402,7 +407,7 @@ antlrcpp::Any ValidationVisitor::visitFunction(
 }
 
 /**
- * @brief Visite le contexte et mentionner que la variable est declaree mais pas utilise
+ * @brief Visite le contexte et mentionner que la variable est declaree mais pas utilisee
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -421,7 +426,7 @@ antlrcpp::Any ValidationVisitor::visitScope(ifccParser::ScopeContext *ctx) {
 }
 
 /**
- * @brief Visite le contexte et check que la variable est un type correcte
+ * @brief Visite le contexte et vérifie que la variable est un type correcte
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -443,7 +448,7 @@ antlrcpp::Any ValidationVisitor::visitDeclaration(
 
 
 /**
- * @brief Visite le contexte de déclaration avec affectation met à jour les scopes en ajoutant la variable déclarée.
+ * @brief Visite le contexte de déclaration avec affectation et met à jour les scopes en ajoutant la variable déclarée.
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -474,7 +479,7 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
 
 
 /**
- *  @brief Récupère une variable par son nom dans les scopes.
+ * @brief Récupère une variable par son nom dans les scopes.
  * 
  * @param name 
  * @return ValidationVisitor::Var* 

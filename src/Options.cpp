@@ -1,7 +1,26 @@
+/**
+ * @file Options.h
+ * @author H4231
+ * @brief Analyse des arguments en entrée du programme
+ * @date 2024-04-05
+ * 
+ */
+
 #include "Options.h"
 #include "unistd.h"
 #include <iostream>
 
+/**
+ * @brief analyse les arguments en entrée du programme pour choisir
+ *        l'architecture cible et les noms des fichiers a lire et a générer
+ *        Ferme le programme en cas de mauvaises entrées
+ * 
+ * @param argn le nombre d'argument dans argv
+ * @param argv les paramètres entrés par l'utilisateur dans l'appel du
+ *          compilateur
+ * @return Options contenant l'architecture cible et le noms des fichiers
+ *         a lire et générer
+ */
 Options Options::fromArgs(int argn, char **argv) {
     int opt;
     Options options;
