@@ -247,7 +247,7 @@ void IRx86Visitor::visitSwitchJump(ir::SwitchJump &jump) {
            << caseTest.first << "\n";
         os << "    je " << caseTest.second->getName() << "\n";
     }
-    std::cout << "    jmp " << defaultBlock->getName() << "\n";
+    os << "    jmp " << defaultBlock->getName() << "\n";
 }
 
 /**
