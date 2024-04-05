@@ -41,7 +41,7 @@ antlrcpp::Any ValidationVisitor::visitIntConst(
 }
 
 /**
- * @brief  Visite un contexte représentant une cosntante.
+ * @brief  Visite un contexte représentant une constante .
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -53,7 +53,7 @@ antlrcpp::Any ValidationVisitor::visitCharConst(
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte et mentionne si la variable est utilisé mais pas initialisée
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -88,7 +88,7 @@ antlrcpp::Any ValidationVisitor::visitParen(ifccParser::ParenContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une pre incrementation et mentionne si la variable est utilisé mais pas initialisée
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -109,7 +109,7 @@ antlrcpp::Any ValidationVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une pre decrementation et mentionne si la variable est utilisé mais pas initialisée
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -130,7 +130,7 @@ antlrcpp::Any ValidationVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexe du plus 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -141,7 +141,7 @@ antlrcpp::Any ValidationVisitor::visitUnaryAdd(
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une multiplication et verifie les operandes
  * 
  * @param ctx contexte antlr4 du noeud 
  * @return antlrcpp::Any 
@@ -153,7 +153,7 @@ antlrcpp::Any ValidationVisitor::visitMult(ifccParser::MultContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une addition et verifie les operandes
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -165,7 +165,7 @@ antlrcpp::Any ValidationVisitor::visitAdd(ifccParser::AddContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'un decalage (operation bits) et verifie le type de l'operande droite 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -182,7 +182,7 @@ antlrcpp::Any ValidationVisitor::visitShift(ifccParser::ShiftContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une comparaison
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -193,7 +193,7 @@ antlrcpp::Any ValidationVisitor::visitCompare(ifccParser::CompareContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'un test d'egalite
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -205,7 +205,7 @@ antlrcpp::Any ValidationVisitor::visitCompareEq(
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte de l'operateur logique AND (bits)
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -217,7 +217,7 @@ antlrcpp::Any ValidationVisitor::visitAndBin(ifccParser::AndBinContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte de l'operateur logique XOR (bits)
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -228,8 +228,8 @@ antlrcpp::Any ValidationVisitor::visitXorBin(ifccParser::XorBinContext *ctx) {
     return std::max(t1, t2);
 }
 
-/**
- * @brief 
+/** 
+ *  @brief Visite le contexte de l'operateur logique OR (bits)
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -243,7 +243,7 @@ antlrcpp::Any ValidationVisitor::visitOrBin(ifccParser::OrBinContext *ctx) {
 
 
 /**
- * @brief 
+ * @brief Visite le contexte du and &&
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -254,7 +254,7 @@ antlrcpp::Any ValidationVisitor::visitAnd(ifccParser::AndContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte du or || 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -265,7 +265,7 @@ antlrcpp::Any ValidationVisitor::visitOr(ifccParser::OrContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une affectation et verifie si la variable a ete declare au prealable
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -288,7 +288,7 @@ antlrcpp::Any ValidationVisitor::visitAffect(ifccParser::AffectContext *ctx) {
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une post incrementation et mentionner si la variable est utilisé mais pas initialisée
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -309,7 +309,7 @@ antlrcpp::Any ValidationVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
 
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une post decrementation et mentionner si la variable est utilisé mais pas initialisée
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -322,7 +322,7 @@ antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
     } else {
         std::ostringstream message;
         message << "Variable '" << ctx->VARIABLE()->getText()
-                << "' is used withoud being initialized";
+                << "' is used without being initialized";
         reporter.report(message.str(), ctx);
         exit(1);
     }
@@ -330,7 +330,7 @@ antlrcpp::Any ValidationVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
 
 
 /**
- * @brief 
+ * @brief Visite le contexte et mentionner si la fonction a le bon nombre d'argument sinon léve une erreur 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
@@ -364,7 +364,7 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
 }
 
 /**
- * @brief 
+ * @brief Visite le contexte d'une fonction et en verifie la validite 
  * 
  * @param ctx contexte antlr4 du noeud
  * @return antlrcpp::Any 
