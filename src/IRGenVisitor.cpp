@@ -14,6 +14,7 @@
 #include "support/Any.h"
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 /**
  * @brief Visite le premier noeud de l'arbre de synthaxe
@@ -63,6 +64,7 @@ antlrcpp::Any IRGenVisitor::visitProg(ifccParser::ProgContext *ctx) {
  */
 antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     // Create a new block, new scope, and set up an unconditional jump.
+    this->names.push_back(std::unordered_map<std::string, int>());
     Scope &currentScope = this->currentBlock->getScope();
     Scope *newScope = new Scope(&currentScope);
     currentFunction->addScope(std::unique_ptr<Scope>(newScope));
@@ -90,6 +92,8 @@ antlrcpp::Any IRGenVisitor::visitScope(ifccParser::ScopeContext *ctx) {
     visitChildren(ctx);
 
     currentBlock = afterScopeBlock;
+
+    this->names.pop_back();
 
     return 0;
 }
@@ -119,15 +123,16 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         elseBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
     }
 
-    this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(condBlock));
+    this->currentBlock->setNext(
+        std::make_unique<ir::UnconditionalJump>(condBlock));
     this->currentBlock = std::move(condBlock);
     std::string condition = this->visit(ctx->expression());
 
     // Create a conditional jump instruction based on the condition.
     end->setNext(std::move(endNext));
 
-    auto conditional = std::make_unique<ir::ConditionalJump>(
-        condition, thenBlock, elseBlock);
+    auto conditional =
+        std::make_unique<ir::ConditionalJump>(condition, thenBlock, elseBlock);
 
     // Set the next block for the current block to be the conditional jump.
     this->currentBlock->setNext(std::move(conditional));
@@ -311,8 +316,8 @@ antlrcpp::Any IRGenVisitor::visitSwitch_stmt(
     std::string expressionTest = this->visit(ctx->expression());
 
     if (!caseTests.empty()) {
-        currentBlock->setNext(
-            std::make_unique<ir::SwitchJump>(expressionTest, caseTests, defaultBlock));
+        currentBlock->setNext(std::make_unique<ir::SwitchJump>(
+            expressionTest, caseTests, defaultBlock));
     }
 
     for (size_t i = 0; i < ctx->case_stmt().size(); ++i) {
@@ -395,6 +400,7 @@ antlrcpp::Any IRGenVisitor::visitFunc_call(ifccParser::Func_callContext *ctx) {
  * @return retourne le nom de la fonction
  */
 antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
+    this->names.push_back(std::unordered_map<std::string, int>());
     std::string funcName = ctx->VARIABLE(0)->getText();
 
     VarType type;
@@ -431,10 +437,14 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
 
     // Keep track of arguments and add them to the scope
     for (size_t i = 1; i < ctx->VARIABLE().size(); ++i) {
-        this->currentFunction->addArg(ctx->VARIABLE(i)->getText(),
-                                      VarType::INT);
-        this->currentBlock->getScope().addVariable(ctx->VARIABLE(i)->getText(),
-                                                   VarType::INT);
+        std::string to = "$" + std::to_string(this->counterVariables);
+        this->currentFunction->addArg(to, VarType::INT);
+        // this->currentBlock->getScope().addVariable(ctx->VARIABLE(i)->getText(),
+        //                                            VarType::INT);
+        this->currentBlock->getScope().addVariable(to, VarType::INT);
+        this->names.back()[ctx->VARIABLE(i)->getText()] =
+            this->counterVariables;
+        ++counterVariables;
     }
 
     // Add a variable "#return" to the current block's scope.
@@ -450,6 +460,8 @@ antlrcpp::Any IRGenVisitor::visitFunction(ifccParser::FunctionContext *ctx) {
     this->currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(epilogue));
     // Push the function to the list of functions in the IR.
     this->ir.push_back(std::move(this->currentFunction));
+
+    this->names.pop_back();
 
     return funcName;
 }
@@ -488,12 +500,15 @@ antlrcpp::Any IRGenVisitor::visitReturn_stmt(
 antlrcpp::Any IRGenVisitor::visitDeclaAffect(
     ifccParser::DeclaAffectContext *ctx) {
     // Add a variable declaration to the current block's scope.
-    this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(),
-                                               VarType::INT);
+    // this->currentBlock->getScope().addVariable(ctx->VARIABLE()->getText(),
+    //                                            VarType::INT);
+    std::string to = "$" + std::to_string(this->counterVariables);
+    this->currentBlock->getScope().addVariable(to, VarType::INT);
+    this->names.back()[ctx->VARIABLE()->getText()] = this->counterVariables;
+    ++counterVariables;
     if (ctx->expression()) {
         // If there's an expression, create an instruction to affect the
         // variable.
-        std::string to = ctx->VARIABLE()->getText();
         std::string from = (std::string)this->visit(ctx->expression());
         auto instruction = std::make_unique<ir::Affect>(to, from);
         this->currentBlock->addInstr(std::move(instruction));
@@ -549,7 +564,9 @@ antlrcpp::Any IRGenVisitor::visitCharConst(ifccParser::CharConstContext *ctx) {
 
 antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
     // Return the name of the variable.
-    return ctx->VARIABLE()->getText();
+    return "$" +
+           std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
+    // return ctx->VARIABLE()->getText();
 }
 
 /**
@@ -560,8 +577,10 @@ antlrcpp::Any IRGenVisitor::visitVariable(ifccParser::VariableContext *ctx) {
  * @return le nom de la varibale du resultat
  */
 antlrcpp::Any IRGenVisitor::visitAffect(
-    ifccParser::AffectContext *ctx) {                               // a op b
-    std::string to = ctx->VARIABLE()->getText();                    // a
+    ifccParser::AffectContext *ctx) { // a op b
+    // std::string to = ctx->VARIABLE()->getText();                    // a
+    std::string to = // a
+        "$" + std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
     std::string from = (std::string)this->visit(ctx->expression()); // b
 
     std::unique_ptr<ir::IRInstr> instructionAffect;
@@ -1019,7 +1038,9 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
  * l'expression
  */
 antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
-    std::string from = ctx->VARIABLE()->getText();
+    // std::string from = ctx->VARIABLE()->getText();
+    std::string from =
+        "$" + std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
     auto instruction =
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_INC, from, from);
     this->currentBlock->addInstr(std::move(instruction));
@@ -1035,7 +1056,9 @@ antlrcpp::Any IRGenVisitor::visitPreInc(ifccParser::PreIncContext *ctx) {
  * l'expression
  */
 antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
-    std::string from = ctx->VARIABLE()->getText();
+    // std::string from = ctx->VARIABLE()->getText();
+    std::string from =
+        "$" + std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
     auto instruction =
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::PRE_DEC, from, from);
     this->currentBlock->addInstr(std::move(instruction));
@@ -1051,7 +1074,9 @@ antlrcpp::Any IRGenVisitor::visitPreDec(ifccParser::PreDecContext *ctx) {
  * l'expression
  */
 antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
-    std::string from = ctx->VARIABLE()->getText();
+    // std::string from = ctx->VARIABLE()->getText();
+    std::string from =
+        "$" + std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(to, VarType::INT);
@@ -1070,7 +1095,9 @@ antlrcpp::Any IRGenVisitor::visitPostInc(ifccParser::PostIncContext *ctx) {
  * l'expression
  */
 antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
-    std::string from = ctx->VARIABLE()->getText();
+    // std::string from = ctx->VARIABLE()->getText();
+    std::string from =
+        "$" + std::to_string(this->getVarFromName(ctx->VARIABLE()->getText()));
     ++counterTempVariables;
     std::string to = "#" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(to, VarType::INT);
@@ -1095,4 +1122,14 @@ ir::BasicBlock *IRGenVisitor::createBlock(const std::string &name) {
     ir::BasicBlock *newBlock = new ir::BasicBlock(&currentScope, n);
     currentFunction->addBlock(std::unique_ptr<ir::BasicBlock>(newBlock));
     return newBlock;
+}
+
+int IRGenVisitor::getVarFromName(const std::string &name) {
+    for (auto scope = names.rbegin(); scope != names.rend(); ++scope) {
+        try {
+            return scope->at(name);
+        } catch (std::out_of_range) {
+        }
+    }
+    exit(1);
 }
