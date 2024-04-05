@@ -7,7 +7,9 @@
 #include "ConstantPropagationVisitor.h"
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
+#include "JumpBlocksVisitor.h"
 #include "RV64Visitor.h"
+#include "RemoveBlocksVisitor.h"
 #include "UnusedTempVarRemoverVisitor.h"
 #include "UserErrorReporter.h"
 #include "ValidationVisitor.h"
@@ -87,6 +89,16 @@ int main(int argn, char **argv) {
     UnusedTempVarRemoverVisitor tmprmv;
     for (const auto &i : ir) {
         i->visitBlocks(tmprmv);
+    }
+
+    JumpBlocksVisitor jbv;
+    for (const auto &i : ir) {
+        i->visitBlocks(jbv);
+    }
+
+    RemoveBlocksVisitor rmbv;
+    for (const auto &i : ir) {
+        i->visitBlocks(rmbv);
     }
 
     for (const auto &i : ir) {
