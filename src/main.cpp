@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <sstream>
 
@@ -9,16 +8,14 @@
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
 #include "RV64Visitor.h"
+#include "UnusedTempVarRemoverVisitor.h"
 #include "UserErrorReporter.h"
 #include "ValidationVisitor.h"
-#include "antlr4-runtime.h"
-#include "ifccBaseVisitor.h"
 #include "ifccLexer.h"
 #include "ifccParser.h"
 
 #include "IRBaseVisitor.h"
 #include "Options.h"
-#include "Scope.h"
 #include "ir.h"
 
 #include <unistd.h>
@@ -85,6 +82,11 @@ int main(int argn, char **argv) {
     ConstantPropagationVisitor cstpropv;
     for (const auto &i : ir) {
         i->visitBlocks(cstpropv);
+    }
+
+    UnusedTempVarRemoverVisitor tmprmv;
+    for (const auto &i : ir) {
+        i->visitBlocks(tmprmv);
     }
 
     for (const auto &i : ir) {
