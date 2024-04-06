@@ -26,4 +26,6 @@ public:
     virtual void visitSwitchJump(ir::SwitchJump &jump) {}
     virtual void visitReturn(ir::Return &jump) {}
     virtual void visitCall(ir::Call &call) {}
+
+    virtual ~IRBaseVisitor() {}
 };
