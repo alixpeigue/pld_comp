@@ -202,8 +202,7 @@ public:
           defaultBlock(std::move(defaultBlock)) {}
     virtual void accept(IRBaseVisitor &visitor) override;
     const std::string &getExpressionTest() const { return expressionTest; }
-    const std::vector<std::pair<std::string, BasicBlock *>> &getCaseTests()
-        const {
+    std::vector<std::pair<std::string, BasicBlock *>> &getCaseTests() {
         return caseTests;
     }
     BasicBlock *getDefaultBlock() { return defaultBlock; }

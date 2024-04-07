@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "ConstantPropagationVisitor.h"
+#include "DebugVisitor.h"
 #include "IRGenVisitor.h"
 #include "IRx86Visitor.h"
 #include "JumpBlocksVisitor.h"
@@ -99,6 +100,13 @@ int main(int argn, char **argv) {
     RemoveBlocksVisitor rmbv;
     for (const auto &i : ir) {
         i->visitBlocks(rmbv);
+    }
+
+    if (opt.debug) {
+        DebugVisitor dbg;
+        for (const auto &i : ir) {
+            i->visitBlocks(dbg);
+        }
     }
 
     for (const auto &i : ir) {

@@ -29,6 +29,14 @@ void JumpBlocksVisitor::visitConditionalJump(ir::ConditionalJump &jump) {
     }
 }
 
+void JumpBlocksVisitor::visitSwitchJump(ir::SwitchJump &jump) {
+    for (auto &[cond, block] : jump.getCaseTests()) {
+        if (auto bb = this->canSkip(block)) {
+            block = bb;
+        }
+    }
+}
+
 ir::BasicBlock *JumpBlocksVisitor::canSkip(ir::BasicBlock *bb) {
     if (bb->getInstructions().empty()) {
         std::unique_ptr<ir::Next> next = bb->getNext();
