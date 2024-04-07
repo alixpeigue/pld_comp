@@ -900,8 +900,8 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
     std::string left = visit(ctx->expression(0));
 
     // on ajoute la variable de retour a l'index
-    ++counterTempVariables;
-    std::string tmp = "$" + std::to_string(counterTempVariables);
+    ++counterVariables;
+    std::string tmp = "$" + std::to_string(counterVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie
@@ -977,8 +977,8 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
     std::string left = visit(ctx->expression(0));
 
     // on ajoute la variable de retour a l'index
-    ++counterTempVariables;
-    std::string tmp = "$" + std::to_string(counterTempVariables);
+    ++counterVariables;
+    std::string tmp = "$" + std::to_string(counterVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie
@@ -1104,6 +1104,12 @@ antlrcpp::Any IRGenVisitor::visitPostDec(ifccParser::PostDecContext *ctx) {
         std::make_unique<ir::UnaryOp>(ir::UnaryOp::POST_DEC, to, from);
     this->currentBlock->addInstr(std::move(instruction));
     return to;
+}
+
+antlrcpp::Any IRGenVisitor::visitStatement(ifccParser::StatementContext *ctx) {
+    this->counterTempVariables = 0;
+    this->visitChildren(ctx);
+    return 0;
 }
 
 /* Creer le block et l'ajoute au CFG actuel */

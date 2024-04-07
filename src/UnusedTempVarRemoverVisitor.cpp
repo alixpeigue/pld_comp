@@ -2,7 +2,7 @@
 #include "ir.h"
 #include <algorithm>
 
-void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
+void UnusedAffectRemoverVisitor::visitCFG(ir::CFG &cfg) {
     for (const auto &block : cfg.getBlocks()) {
         for (size_t i = 0; i < block->getInstructions().size(); ++i) {
             instr_index = i;
@@ -11,8 +11,8 @@ void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
         auto next = block->getNext();
         next->accept(*this);
         block->setNext(std::move(next));
-        std::vector<int> indexes;
-        for (const auto &[_, index] : tempAffects) {
+        for (const auto &[name, index] : tempAffects) {
+            // block->getScope().removeVariable(name);
             indexes.push_back(index);
         }
         std::sort(indexes.begin(), indexes.end(), std::greater<>());
@@ -21,28 +21,38 @@ void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
                                            i);
         }
         tempAffects.clear();
+        indexes.clear();
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitAffectConst(ir::AffectConst &affect) {
+void UnusedAffectRemoverVisitor::visitAffectConst(ir::AffectConst &affect) {
     if (affect.getTo()[0] == '#' && affect.getTo() != "#return") {
+        if (tempAffects.find(affect.getTo()) != tempAffects.end()) {
+            indexes.push_back(this->tempAffects[affect.getTo()]);
+        }
         this->tempAffects[affect.getTo()] = instr_index;
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitAffect(ir::Affect &affect) {
+void UnusedAffectRemoverVisitor::visitAffect(ir::Affect &affect) {
     if (affect.getFrom()[0] == '#') {
         this->tempAffects.erase(affect.getFrom());
     }
+    if (affect.getTo()[0] == '#' && affect.getTo() != "#return") {
+        if (tempAffects.find(affect.getTo()) != tempAffects.end()) {
+            indexes.push_back(this->tempAffects[affect.getTo()]);
+        }
+        this->tempAffects[affect.getTo()] = instr_index;
+    }
 }
 
-void UnusedTempVarRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
+void UnusedAffectRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
     if (unaryOp.getFrom()[0] == '#') {
         this->tempAffects.erase(unaryOp.getFrom());
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
+void UnusedAffectRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
     std::string tempVarName;
     if (binOp.getLeft()[0] == '#') {
         tempVarName = binOp.getLeft();
@@ -55,18 +65,18 @@ void UnusedTempVarRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
     this->tempAffects.erase(tempVarName);
 }
 
-void UnusedTempVarRemoverVisitor::visitCall(ir::Call &call) {
+void UnusedAffectRemoverVisitor::visitCall(ir::Call &call) {
     for (const auto &arg : call.getNames()) {
         this->tempAffects.erase(arg);
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitConditionalJump(
+void UnusedAffectRemoverVisitor::visitConditionalJump(
     ir::ConditionalJump &jump) {
 
     this->tempAffects.erase(jump.getCondition());
 }
 
-void UnusedTempVarRemoverVisitor::visitSwitchJump(ir::SwitchJump &jump) {
+void UnusedAffectRemoverVisitor::visitSwitchJump(ir::SwitchJump &jump) {
     this->tempAffects.erase(jump.getExpressionTest());
 }
