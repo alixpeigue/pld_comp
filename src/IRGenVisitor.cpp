@@ -123,14 +123,8 @@ antlrcpp::Any IRGenVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         elseBlock->setNext(std::make_unique<ir::UnconditionalJump>(end));
     }
 
-<<<<<<< HEAD
-    this->currentBlock->setNext(
-        std::make_unique<ir::UnconditionalJump>(condBlock));
-    this->currentBlock = std::move(condBlock);
-=======
     // this->currentBlock->setNext(std::make_unique<ir::UnconditionalJump>(condBlock));
     // this->currentBlock = std::move(condBlock);
->>>>>>> ba9981d (no need for condition block)
     std::string condition = this->visit(ctx->expression());
 
     // Create a conditional jump instruction based on the condition.
