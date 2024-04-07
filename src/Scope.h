@@ -1,10 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 /**
  * @brief Classe représentant les types de variables en C
@@ -59,8 +61,6 @@ using Variable = std::pair<VarType, uint32_t>;
  */
 class Scope {
 public:
-    Scope(Scope &&scope)
-        : parent(scope.parent), vars(std::move(scope.vars)), size(scope.size) {}
     /**
      * @brief Construit un scope vide avec `parent` comme parent. Le scope
      parent est le scope dans lequel il est impriqué :
@@ -74,7 +74,7 @@ public:
      a est le parent de b
      * @param parent le parent du scope
      */
-    Scope(Scope *parent) : parent(parent), size(0){};
+    Scope(Scope *parent) : parent(parent){};
 
     /**
      * @brief Cherche une variable dans ce scope, si elle n'est pas trouvée dans
@@ -94,19 +94,28 @@ public:
      * @param type type de la variable
      */
     void addVariable(std::string name, VarType type) {
-        size += 4;
-        vars.insert(std::make_pair(name, std::make_pair(type, size)));
+        if (vars.find(name) == vars.end()) {
+            vars.insert(std::make_pair(name, type));
+            order.push_back(name);
+        }
+    }
+
+    void removeVariable(const std::string &name) {
+        auto pos = std::find(order.begin(), order.end(), name);
+        order.erase(pos);
+        vars.erase(name);
     }
 
     std::ostream &print(std::ostream &os) {
         for (auto &pair : vars) {
-            os << pair.first << " at " << pair.second.second << "\n";
+            auto p = this->getVariable(pair.first);
+            os << pair.first << " at " << p.value().second << "\n";
         }
         return os;
     }
 
 protected:
     Scope *parent;
-    std::unordered_map<std::string, Variable> vars;
-    uint32_t size;
+    std::unordered_map<std::string, VarType> vars;
+    std::vector<std::string> order;
 };

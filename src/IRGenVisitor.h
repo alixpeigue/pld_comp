@@ -104,6 +104,9 @@ public:
 
     virtual antlrcpp::Any visitPreDec(ifccParser::PreDecContext *ctx) override;
 
+    virtual antlrcpp::Any visitStatement(
+        ifccParser::StatementContext *ctx) override;
+
 private:
     std::vector<std::unique_ptr<ir::CFG>> &ir;
     std::unique_ptr<ir::CFG> currentFunction;

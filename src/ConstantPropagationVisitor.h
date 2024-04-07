@@ -14,6 +14,7 @@ class ConstantPropagationVisitor : public IRBaseVisitor {
     virtual void visitUnconditionalJump(ir::UnconditionalJump &jump) override;
     virtual void visitSwitchJump(ir::SwitchJump &jump) override;
     virtual void visitReturn(ir::Return &ret) override;
+    virtual void visitCall(ir::Call &call) override;
 
 protected:
     std::unordered_map<std::string, int> constants;

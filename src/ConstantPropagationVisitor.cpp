@@ -276,3 +276,7 @@ void ConstantPropagationVisitor::visitSwitchJump(ir::SwitchJump &jump) {
 void ConstantPropagationVisitor::visitReturn(ir::Return &ret) {
     ret.getBlock().setNext(std::make_unique<ir::Return>(ret));
 }
+
+void ConstantPropagationVisitor::visitCall(ir::Call &call) {
+    this->constants.erase(call.getRet());
+}

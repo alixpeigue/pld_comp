@@ -2,8 +2,9 @@
 
 #include "IRBaseVisitor.h"
 #include "ir.h"
+#include <unordered_map>
 
-class UnusedTempVarRemoverVisitor : public IRBaseVisitor {
+class UnusedAffectRemoverVisitor : public IRBaseVisitor {
     virtual void visitAffectConst(ir::AffectConst &affect) override;
     virtual void visitAffect(ir::Affect &affect) override;
     virtual void visitUnaryOp(ir::UnaryOp &unaryOp) override;
@@ -15,5 +16,6 @@ class UnusedTempVarRemoverVisitor : public IRBaseVisitor {
 
 protected:
     std::unordered_map<std::string, int> tempAffects;
+    std::vector<int> indexes;
     size_t instr_index;
 };

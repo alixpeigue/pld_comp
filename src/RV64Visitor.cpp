@@ -131,6 +131,9 @@ void RV64Visitor::visitCFG(ir::CFG &cfg) {
                                      "a4", "a5", "a6", "a7"};
 
     int size = ((cfg.getSize() + 16 + 15) / 16) * 16;
+    std::cerr << cfg.getName() << " : " << size << " : " << cfg.getSize();
+
+    cfg.getBlocks()[0]->getScope().print(std::cerr);
 
     // prelude
     os << ".globl " << cfg.getName() << "\n";

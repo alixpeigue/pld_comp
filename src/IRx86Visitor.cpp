@@ -19,7 +19,7 @@
  */
 void IRx86Visitor::visitAffect(ir::Affect &affect) {
     Scope &scope = affect.getBlock().getScope();
-    scope.print(std::cerr);
+    // scope.print(std::cerr);
     std::cerr << "TO : " << affect.getTo() << " FROM " << affect.getFrom()
               << "\n";
     Variable to = scope.getVariable(affect.getTo()).value();

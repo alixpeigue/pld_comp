@@ -82,12 +82,17 @@ int main(int argn, char **argv) {
     IRGenVisitor v1(ir);
     v1.visit(tree); // creer l'IR
 
+    DebugVisitor dbg;
+    for (const auto &i : ir) {
+        i->visitBlocks(dbg);
+    }
+
     ConstantPropagationVisitor cstpropv;
     for (const auto &i : ir) {
         i->visitBlocks(cstpropv);
     }
 
-    UnusedTempVarRemoverVisitor tmprmv;
+    UnusedAffectRemoverVisitor tmprmv;
     for (const auto &i : ir) {
         i->visitBlocks(tmprmv);
     }
@@ -107,6 +112,10 @@ int main(int argn, char **argv) {
         for (const auto &i : ir) {
             i->visitBlocks(dbg);
         }
+    }
+
+    for (const auto &i : ir) {
+        i->visitBlocks(dbg);
     }
 
     for (const auto &i : ir) {
