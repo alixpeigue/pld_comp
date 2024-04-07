@@ -10,6 +10,8 @@ class UnusedTempVarRemoverVisitor : public IRBaseVisitor {
     virtual void visitBinOp(ir::BinOp &binOp) override;
     virtual void visitCFG(ir::CFG &cfg) override;
     virtual void visitCall(ir::Call &call) override;
+    virtual void visitConditionalJump(ir::ConditionalJump &jump) override;
+    virtual void visitSwitchJump(ir::SwitchJump &jump) override;
 
 protected:
     std::unordered_map<std::string, int> tempAffects;
