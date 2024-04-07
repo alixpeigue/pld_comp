@@ -8,12 +8,15 @@ void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
             instr_index = i;
             block->getInstructions()[i]->accept(*this);
         }
+        auto next = block->getNext();
+        next->accept(*this);
+        block->setNext(std::move(next));
         std::vector<int> indexes;
-        for (const auto &i : tempAffects) {
-            indexes.push_back(i.second);
+        for (const auto &[_, index] : tempAffects) {
+            indexes.push_back(index);
         }
         std::sort(indexes.begin(), indexes.end(), std::greater<>());
-        for (const auto &i : indexes) {
+        for (auto i : indexes) {
             block->getInstructions().erase(block->getInstructions().begin() +
                                            i);
         }
@@ -56,4 +59,14 @@ void UnusedTempVarRemoverVisitor::visitCall(ir::Call &call) {
     for (const auto &arg : call.getNames()) {
         this->tempAffects.erase(arg);
     }
+}
+
+void UnusedTempVarRemoverVisitor::visitConditionalJump(
+    ir::ConditionalJump &jump) {
+
+    this->tempAffects.erase(jump.getCondition());
+}
+
+void UnusedTempVarRemoverVisitor::visitSwitchJump(ir::SwitchJump &jump) {
+    this->tempAffects.erase(jump.getExpressionTest());
 }

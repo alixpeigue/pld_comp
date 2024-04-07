@@ -883,7 +883,7 @@ antlrcpp::Any IRGenVisitor::visitAnd(ifccParser::AndContext *ctx) {
 
     // on ajoute la variable de retour a l'index
     ++counterTempVariables;
-    std::string tmp = "#" + std::to_string(counterTempVariables);
+    std::string tmp = "$" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie
@@ -960,7 +960,7 @@ antlrcpp::Any IRGenVisitor::visitOr(ifccParser::OrContext *ctx) {
 
     // on ajoute la variable de retour a l'index
     ++counterTempVariables;
-    std::string tmp = "#" + std::to_string(counterTempVariables);
+    std::string tmp = "$" + std::to_string(counterTempVariables);
     this->currentBlock->getScope().addVariable(tmp, VarType::INT);
 
     // On créé le lazy block auquel on accede uniquement si la premiere partie
