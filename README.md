@@ -71,7 +71,7 @@ Si vous avez compilé en RISC-V et souhaitez exécuter le programme sur un émul
 IFCC est livré avec un ensemble de tests d'intégration pour vérifier son bon fonctionnement. Les tests se trouvent dans le dossier `tests/testfiles/`. Vous pouvez exécuter tous les tests en utilisant la commande suivante :
 
 ```bash
-$ make check
+make check
 ```
 
 Cela lancera les tests avec l'architecture Intel x86 et RISC-V. Vous pouvez également spécifier `make check-x86` ou `make check-rv64` pour exécuter les tests sur une architecture spécifique.
