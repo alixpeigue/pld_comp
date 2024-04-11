@@ -1,9 +1,18 @@
+/**
+ * @file UnusedTempVarRemoverVisitor.h
+ * @date 2024-04-02
+ */
+
 #pragma once
 
 #include "IRBaseVisitor.h"
 #include "ir.h"
 
-class UnusedTempVarRemoverVisitor : public IRBaseVisitor {
+/**
+ * @brief Visiteur qui supprime les assignations inutiles
+ *
+ */
+class UnusedAffectsRemoverVisitor : public IRBaseVisitor {
     virtual void visitAffectConst(ir::AffectConst &affect) override;
     virtual void visitAffect(ir::Affect &affect) override;
     virtual void visitUnaryOp(ir::UnaryOp &unaryOp) override;

@@ -11,7 +11,7 @@
 #include "JumpBlocksVisitor.h"
 #include "RV64Visitor.h"
 #include "RemoveBlocksVisitor.h"
-#include "UnusedTempVarRemoverVisitor.h"
+#include "UnusedAffectsRemoverVisitor.h"
 #include "UserErrorReporter.h"
 #include "ValidationVisitor.h"
 #include "ifccLexer.h"
@@ -87,7 +87,7 @@ int main(int argn, char **argv) {
         i->visitBlocks(cstpropv);
     }
 
-    UnusedTempVarRemoverVisitor tmprmv;
+    UnusedAffectsRemoverVisitor tmprmv;
     for (const auto &i : ir) {
         i->visitBlocks(tmprmv);
     }

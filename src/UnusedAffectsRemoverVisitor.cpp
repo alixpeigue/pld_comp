@@ -1,8 +1,8 @@
-#include "UnusedTempVarRemoverVisitor.h"
+#include "UnusedAffectsRemoverVisitor.h"
 #include "ir.h"
 #include <algorithm>
 
-void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
+void UnusedAffectsRemoverVisitor::visitCFG(ir::CFG &cfg) {
     for (const auto &block : cfg.getBlocks()) {
         for (size_t i = 0; i < block->getInstructions().size(); ++i) {
             instr_index = i;
@@ -24,25 +24,25 @@ void UnusedTempVarRemoverVisitor::visitCFG(ir::CFG &cfg) {
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitAffectConst(ir::AffectConst &affect) {
+void UnusedAffectsRemoverVisitor::visitAffectConst(ir::AffectConst &affect) {
     if (affect.getTo()[0] == '#' && affect.getTo() != "#return") {
         this->tempAffects[affect.getTo()] = instr_index;
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitAffect(ir::Affect &affect) {
+void UnusedAffectsRemoverVisitor::visitAffect(ir::Affect &affect) {
     if (affect.getFrom()[0] == '#') {
         this->tempAffects.erase(affect.getFrom());
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
+void UnusedAffectsRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
     if (unaryOp.getFrom()[0] == '#') {
         this->tempAffects.erase(unaryOp.getFrom());
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
+void UnusedAffectsRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
     std::string tempVarName;
     if (binOp.getLeft()[0] == '#') {
         tempVarName = binOp.getLeft();
@@ -55,18 +55,18 @@ void UnusedTempVarRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
     this->tempAffects.erase(tempVarName);
 }
 
-void UnusedTempVarRemoverVisitor::visitCall(ir::Call &call) {
+void UnusedAffectsRemoverVisitor::visitCall(ir::Call &call) {
     for (const auto &arg : call.getNames()) {
         this->tempAffects.erase(arg);
     }
 }
 
-void UnusedTempVarRemoverVisitor::visitConditionalJump(
+void UnusedAffectsRemoverVisitor::visitConditionalJump(
     ir::ConditionalJump &jump) {
 
     this->tempAffects.erase(jump.getCondition());
 }
 
-void UnusedTempVarRemoverVisitor::visitSwitchJump(ir::SwitchJump &jump) {
+void UnusedAffectsRemoverVisitor::visitSwitchJump(ir::SwitchJump &jump) {
     this->tempAffects.erase(jump.getExpressionTest());
 }
