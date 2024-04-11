@@ -168,7 +168,7 @@ void IRx86Visitor::visitCFG(ir::CFG &cfg) {
     os << cfg.getName() << ":\n";
     os << "    push rbp\n";
     os << "    mov rbp, rsp\n";
-    os << "    sub rsp, " << cfg.getSize() << '\n';
+    os << "    sub rsp, " << size << '\n';
     if (cfg.getName() == "main") {
         os << "    mov DWORD PTR -" << ret.second << "[rbp], 0\n";
     }
