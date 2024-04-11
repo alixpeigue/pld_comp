@@ -11,8 +11,7 @@ void UnusedAffectsRemoverVisitor::visitCFG(ir::CFG &cfg) {
         auto next = block->getNext();
         next->accept(*this);
         block->setNext(std::move(next));
-        std::vector<int> indexes;
-        for (const auto &[_, index] : tempAffects) {
+        for (const auto &[name, index] : tempAffects) {
             indexes.push_back(index);
         }
         std::sort(indexes.begin(), indexes.end(), std::greater<>());
@@ -21,22 +20,39 @@ void UnusedAffectsRemoverVisitor::visitCFG(ir::CFG &cfg) {
                                            i);
         }
         tempAffects.clear();
+        indexes.clear();
     }
 }
-
 void UnusedAffectsRemoverVisitor::visitAffectConst(ir::AffectConst &affect) {
     if (affect.getTo()[0] == '#' && affect.getTo() != "#return") {
+        // if there is still an affectation, we can delete the affectation
+        // because it is overriden and not used
+        if (tempAffects.find(affect.getTo()) != tempAffects.end()) {
+            indexes.push_back(this->tempAffects[affect.getTo()]);
+        }
+        // we save the new assign
         this->tempAffects[affect.getTo()] = instr_index;
     }
 }
 
 void UnusedAffectsRemoverVisitor::visitAffect(ir::Affect &affect) {
     if (affect.getFrom()[0] == '#') {
+        // we use "from" so we can't delete the last assign to "from"
         this->tempAffects.erase(affect.getFrom());
+    }
+    if (affect.getTo()[0] == '#' && affect.getTo() != "#return") {
+        // if there is still an affectation, we can delete the affectation
+        // because it is overriden and not used
+        if (tempAffects.find(affect.getTo()) != tempAffects.end()) {
+            indexes.push_back(this->tempAffects[affect.getTo()]);
+        }
+        // we save the new assign
+        this->tempAffects[affect.getTo()] = instr_index;
     }
 }
 
 void UnusedAffectsRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
+    // we can't optimise because UnaryOp can mutate "from"
     if (unaryOp.getFrom()[0] == '#') {
         this->tempAffects.erase(unaryOp.getFrom());
     }
@@ -45,14 +61,10 @@ void UnusedAffectsRemoverVisitor::visitUnaryOp(ir::UnaryOp &unaryOp) {
 void UnusedAffectsRemoverVisitor::visitBinOp(ir::BinOp &binOp) {
     std::string tempVarName;
     if (binOp.getLeft()[0] == '#') {
-        tempVarName = binOp.getLeft();
+        this->tempAffects.erase(binOp.getLeft());
     } else if (binOp.getRight()[0] == '#') {
-        tempVarName = binOp.getRight();
-    } else {
-        return;
+        this->tempAffects.erase(binOp.getRight());
     }
-
-    this->tempAffects.erase(tempVarName);
 }
 
 void UnusedAffectsRemoverVisitor::visitCall(ir::Call &call) {

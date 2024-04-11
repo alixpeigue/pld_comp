@@ -24,5 +24,6 @@ class UnusedAffectsRemoverVisitor : public IRBaseVisitor {
 
 protected:
     std::unordered_map<std::string, int> tempAffects;
+    std::vector<int> indexes;
     size_t instr_index;
 };
