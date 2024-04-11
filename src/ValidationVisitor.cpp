@@ -101,11 +101,15 @@ antlrcpp::Any ValidationVisitor::visitShift(ifccParser::ShiftContext *ctx) {
 }
 
 antlrcpp::Any ValidationVisitor::visitCompare(ifccParser::CompareContext *ctx) {
+    this->visitChildren(ctx);
+
     return VarType(VarType::INT);
 }
 
 antlrcpp::Any ValidationVisitor::visitCompareEq(
     ifccParser::CompareEqContext *ctx) {
+
+    this->visitChildren(ctx);
     return VarType(VarType::INT);
 }
 
@@ -204,7 +208,8 @@ antlrcpp::Any ValidationVisitor::visitFunc_call(
     }
     if (f.at(0) == VarType::VOID &&
         !dynamic_cast<ifccParser::StatementContext *>(ctx->parent)) {
-        // if vunction returns void and is not in a statement (its return value is not ignored)
+        // if vunction returns void and is not in a statement (its return value
+        // is not ignored)
 
         this->reporter.report("void value not ignored as it should be", ctx);
         exit(1);
@@ -295,7 +300,7 @@ antlrcpp::Any ValidationVisitor::visitDeclaAffect(
     this->visitChildren(ctx);
 
     std::string varName = ctx->VARIABLE()->getText();
-    
+
     if (this->scopes.back().find(varName) != this->scopes.back().end()) {
         this->reporter.report("variable was already declared", ctx);
         exit(1);
