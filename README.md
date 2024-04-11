@@ -20,8 +20,12 @@ IFCC est un compilateur développé pour traduire du code source écrit dans un 
 
 Pour compiler IFCC, suivez ces étapes :
 
-1. Assurez-vous que vous avez `make` installé sur votre système.
-3. Allez dans le répertoire racine du projet IFCC.
+1. Assurez-vous que vous avez `make`, ainsi que `antlr` et son runtime C++ installés sur votre système. Vous pouvez installer antlr via le script `install-antlr.sh`.
+2. Allez dans le répertoire racine du projet IFCC.
+3. Créez le fichier `config.mk` correspondant à votre installation d'ANTLR, ou utilisez un des fichiers fourni `DI.mk` (installation via le script), `fedora.mk`, `ubuntu.mk` : 
+```bash
+ln -s <fichier>.mk config.mk
+```
 4. Lancez la commande `make`.
 
 ### Compilation d'un programme
@@ -32,13 +36,15 @@ Une fois IFCC compilé, vous pouvez utiliser le compilateur pour traduire votre 
 2. Utilisez la commande suivante pour compiler votre programme :
 
 ```bash
-ifcc <nom_fichier_source>.c [-t target] [-o <nom_fichier_cible>.s]
+./ifcc [-t target] [-o <nom_fichier_cible>.s] [-d] [-s] <nom_fichier_source>.c
 ```
 
 - L'option `-t target` vous permet de spécifier l'architecture cible pour la génération de l'assembleur. Vous pouvez choisir entre `x86-64` pour Intel x86 et `rv64` pour RISC-V. Par défaut, le code est compilé en assembleur Intel x86.
 - L’option `-o <nom_fichier_cible>.s` permet de spécifier le nom du fichier de sortie pour le code assembleur généré. Par défaut, le nom du fichier de sortie est `./out.s`.
+- L'option `-s` permet d'afficher le code généré dans la sortie standard
+- L'option `-d` permet d'afficher une représentation de la représentation intermédiaire dans la sortie d'erreur
 
-### Assemblage et linking
+### Assemblage et édition des liens
 
 Après avoir généré le code assembleur, vous devez l'assembler et le linker en fonction de l'architecture cible. Selon votre machine, vous pouvez par exemple procéder comme suit :
 
