@@ -9,6 +9,7 @@
   - [Assemblage et linking](#assemblage-et-linking)
   - [Exécution du programme](#exécution-du-programme)
 - [Tests](#tests)
+- [Documentation](#documentation)
 
 ## Introduction
 
@@ -81,3 +82,7 @@ make check
 ```
 
 Cela lancera les tests avec l'architecture Intel x86 et RISC-V. Vous pouvez également spécifier `make check-x86` ou `make check-rv64` pour exécuter les tests sur une architecture spécifique.
+
+## Documentation
+
+Le code est documenté via dowygen, pour générer la documentation en local, éxécuter `make doc`.
