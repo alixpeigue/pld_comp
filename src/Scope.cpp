@@ -13,12 +13,6 @@
 #include <stdexcept>
 #include <utility>
 
-/**
- * @brief Construct a new Var Type:: Var Type object
- *
- * @param name nom du type
- */
-
 VarType::VarType(const std::string &name) {
     if (name == "void") {
         type = VOID;
@@ -28,13 +22,6 @@ VarType::VarType(const std::string &name) {
         type = VOID;
     }
 }
-
-/**
- * @brief Recupere la variable stocke dans la map
- *
- * @param varName nom de la variable quand veut recuperer
- * @return std::optional<Variable>
- */
 
 std::optional<Variable> Scope::getVariable(const std::string &varName) {
     VarType var;
@@ -52,6 +39,12 @@ std::optional<Variable> Scope::getVariable(const std::string &varName) {
     }
     pos += parent ? parent->getSize() : 0;
     return std::make_pair(var, pos);
+}
+
+void Scope::removeVariable(const std::string &name) {
+    auto pos = std::find(order.begin(), order.end(), name);
+    order.erase(pos);
+    vars.erase(name);
 }
 
 uint32_t Scope::getSize() {

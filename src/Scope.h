@@ -100,12 +100,17 @@ public:
         }
     }
 
-    void removeVariable(const std::string &name) {
-        auto pos = std::find(order.begin(), order.end(), name);
-        order.erase(pos);
-        vars.erase(name);
-    }
-
+    /**
+     * @brief Removes the variable from the scope
+     *
+     * @param name the name of the variable to remove
+     */
+    void removeVariable(const std::string &name);
+    /**
+     * @brief Get vector of variables
+     *
+     * @return const std::unordered_map<std::string, VarType>&
+     */
     const std::unordered_map<std::string, VarType> &getVariables() {
         return vars;
     }
