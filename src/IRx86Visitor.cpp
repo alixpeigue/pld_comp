@@ -162,6 +162,7 @@ void IRx86Visitor::visitCFG(ir::CFG &cfg) {
 
     std::vector<std::string> regs = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
     Variable ret = cfg.getEpilogue().getScope().getVariable("#return").value();
+    int size = ((cfg.getSize() + 15) / 16) * 16;
     // prelude
     os << ".globl " << cfg.getName() << "\n";
     os << cfg.getName() << ":\n";
