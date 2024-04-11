@@ -106,6 +106,10 @@ public:
         vars.erase(name);
     }
 
+    const std::unordered_map<std::string, VarType> &getVariables() {
+        return vars;
+    }
+
     std::ostream &print(std::ostream &os) {
         for (auto &pair : vars) {
             auto p = this->getVariable(pair.first);

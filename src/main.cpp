@@ -11,7 +11,8 @@
 #include "JumpBlocksVisitor.h"
 #include "RV64Visitor.h"
 #include "RemoveBlocksVisitor.h"
-#include "UnusedTempVarRemoverVisitor.h"
+#include "UnusedAffectRemoverVisitor.h"
+#include "UnusedVarsRemoverVisitor.h"
 #include "UserErrorReporter.h"
 #include "ValidationVisitor.h"
 #include "ifccLexer.h"
@@ -110,6 +111,15 @@ int main(int argn, char **argv) {
     for (const auto &i : ir) {
         i->visitBlocks(dbg);
     }
+
+    UnusedVarsRemoverVisitor uvrv;
+    for (const auto &i : ir) {
+        i->visitBlocks(uvrv);
+    }
+
+    // for (const auto &i : ir) {
+    //     i->visitBlocks(dbg);
+    // }
 
     for (const auto &i : ir) {
         i->visitBlocks(*codeGenVisitor);

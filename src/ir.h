@@ -284,6 +284,10 @@ public:
     const std::vector<std::pair<std::string, VarType>> &getArgs() const {
         return args;
     }
+
+    const std::vector<std::unique_ptr<Scope>> &getScopes() const {
+        return scopes;
+    }
     // Scope *mcainScope;
 
 protected:
